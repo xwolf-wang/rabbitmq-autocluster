@@ -68,7 +68,6 @@ api_get_request(Service, Path) ->
     {error, Message, _} -> {error, Message}
   end.
 
-
 -spec build_instance_list_qargs(Instances :: list(), Accum :: list()) -> list().
 %% @private
 %% @doc Build the Query args for filtering instances by InstanceID.
@@ -126,14 +125,10 @@ fetch_all_autoscaling_instances(QArgs, Accum) ->
     {ok, Payload} ->
       Instances = flatten_autoscaling_datastructure(Payload),
       NextToken = get_next_token(Payload),
-      case get_all_autoscaling_instances(lists:append(Instances, Accum), NextToken) of
-        {ok, InnerInstances} ->
-          {ok, InnerInstances};
-        error -> error
-      end;
-    {error, Reason} ->
+      get_all_autoscaling_instances(lists:append(Instances, Accum), NextToken);
+    {error, Reason} = Error ->
       autocluster_log:error("Error fetching autoscaling group instance list: ~p", [Reason]),
-      error
+      Error
   end.
 
 get_autoscaling_group_node_list(error, _) -> {error, instance_discovery};
@@ -148,10 +143,10 @@ get_autoscaling_group_node_list(Instance, Tag) ->
           Names = get_priv_dns_by_instance_ids(Values, Tag),
           autocluster_log:debug("Fetching autoscaling = DNS: ~p", [Names]),
           {ok, [autocluster_util:node_name(N) || N <- Names]};
-        error -> error
+        error -> {error, autoscaling_group_not_found}
       end;
     error ->
-      error
+      {error, describe_autoscaling_instances}
   end.
 
 
