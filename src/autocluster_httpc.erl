@@ -201,11 +201,12 @@ delete(Scheme, Host, Port, Path, Args, Body) ->
 %%
 decode_body(_, []) -> [];
 decode_body(?CONTENT_JSON, Body) ->
-  case rabbit_json:try_decode(rabbit_data_coercion:to_binary(Body), []) of
-    {ok, Value} -> Value;
-    {error,_}   -> []
-  end.
-
+    case rabbit_misc:json_decode(rabbit_data_coercion:to_binary(Body)) of
+        {ok, Value} ->
+            rabbit_misc:json_to_term(Value);
+        error ->
+            []
+    end.
 
 %% @private
 %% @spec parse_response(Response) -> {ok, string()} | {error, mixed}

@@ -13,7 +13,9 @@
          nic_ipv4/1,
          node_hostname/1,
          node_name/1,
-         parse_port/1]).
+         parse_port/1,
+         as_proplist/1
+        ]).
 
 
 %% Export all for unit tests
@@ -260,3 +262,29 @@ parse_port(Value) when is_list(Value) ->
 parse_port(Value) -> as_integer(Value).
 
 
+%%--------------------------------------------------------------------
+%% @doc
+%% Returns a proplist from a JSON structure (environment variable) or
+%% the settings key (already a proplist).
+%% @end
+%%--------------------------------------------------------------------
+-spec as_proplist(Value :: string() | [{string(), string()}]) ->
+                         [{string(), string()}].
+as_proplist([Tuple | _] = Json) when is_tuple(Tuple) ->
+    Json;
+as_proplist([]) ->
+    [];
+as_proplist(List) when is_list(List) ->
+    case rabbit_misc:json_decode(List) of
+        {ok, {struct, _} = Json} ->
+            [{binary_to_list(K), binary_to_list(V)}
+             || {K, V} <- rabbit_misc:json_to_term(Json)];
+        _ ->
+            autocluster_log:error("Unexpected data type for proplist value: ~p. JSON parser returned an error!~n",
+                                  [List]),
+            []
+    end;
+as_proplist(Value) ->
+    autocluster_log:error("Unexpected data type for proplist value: ~p.~n",
+                          [Value]),
+    [].

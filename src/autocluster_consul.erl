@@ -251,7 +251,7 @@ node_list_qargs(Cluster) -> [passing, {tag, Cluster}].
 -spec registration_body() -> {ok, Body :: binary()} | {error, atom()}.
 registration_body() ->
   Payload = autocluster_consul:build_registration_body(),
-  registration_body(rabbit_json:try_encode(Payload, [])).
+  registration_body(rabbit_misc:json_encode(Payload)).
 
 
 %%--------------------------------------------------------------------
@@ -266,7 +266,7 @@ registration_body() ->
                                     {error, Reason :: atom()})
   -> {ok, Body :: binary()} | {error, Reason :: atom()}.
 registration_body({ok, Body}) ->
-  {ok, Body};
+  {ok, list_to_binary(Body)};
 registration_body({error, Reason}) ->
   autocluster_log:error("Error serializing the request body: ~p",
     [Reason]),
