@@ -20,7 +20,7 @@
          {config, node_type,             "RABBITMQ_NODE_TYPE",     disc,         atom,    false},
 
          {config, aws_autoscaling,       "AWS_AUTOSCALING",        false,        atom,    false}, %% AWS
-         {config, aws_ec2_tags,          "AWS_EC2_TAGS",           "undefined",  proplist,  false},
+         {config, aws_ec2_tags,          "AWS_EC2_TAGS",           [],           proplist,  false},
          {config, aws_access_key,        "AWS_ACCESS_KEY_ID",      "undefined",  string,  false},
          {config, aws_secret_key,        "AWS_SECRET_ACCESS_KEY",  "undefined",  string,  false},
          {config, aws_ec2_region,        "AWS_DEFAULT_REGION",     "undefined",  string,  false},
@@ -28,9 +28,11 @@
          {config, cluster_name,          "CLUSTER_NAME",           "undefined",  string,  false}, %% Consul && etcd
 
          {config, consul_acl_token,      "CONSUL_ACL_TOKEN",       "undefined",  string,  false}, %% Consul
+         {config, consul_include_nodes_with_warnings,     "CONSUL_INCLUDE_NODES_WITH_WARNINGS",      false,        atom,    false},
          {config, consul_scheme,         "CONSUL_SCHEME",          "http",       string,  false},
          {config, consul_host,           "CONSUL_HOST",            "localhost",  string,  false},
          {config, consul_port,           "CONSUL_PORT",            8500,         integer, true},
+         {config, consul_domain,         "CONSUL_DOMAIN",          "consul",     string,  false},
          {config, consul_svc,            "CONSUL_SVC",             "rabbitmq",   string,  false},
          {config, consul_svc_addr,       "CONSUL_SVC_ADDR",        "undefined",  string,  false},
          {config, consul_svc_addr_auto,  "CONSUL_SVC_ADDR_AUTO",   false,        atom,    false},
@@ -39,6 +41,7 @@
          {config, consul_svc_port,       "CONSUL_SVC_PORT",        5672,         integer, true},
          {config, consul_svc_ttl,        "CONSUL_SVC_TTL",         30,           integer, false},
          {config, consul_deregister_after, "CONSUL_DEREGISTER_AFTER", "",        integer,    false}, %% consul deregister_critical_service_after
+         {config, consul_use_longname,   "CONSUL_USE_LONGNAME",    false,        atom,    false},
 
          {config, autocluster_host,      "AUTOCLUSTER_HOST",       "undefined",  string,  false}, %% DNS
 

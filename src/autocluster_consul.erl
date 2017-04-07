@@ -71,7 +71,9 @@ nodelist() ->
                               autocluster_config:get(consul_svc)],
                              node_list_qargs()) of
     {ok, Nodes} ->
-      {ok, extract_nodes(Nodes)};
+      {ok, extract_nodes(
+             filter_nodes(Nodes,
+                          autocluster_config:get(consul_include_nodes_with_warnings)))};
     Error       -> Error
   end.
 
@@ -183,6 +185,30 @@ maybe_add_acl(QArgs) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
+%% If nodes with health checks with 'warning' status are accepted, perform
+%% the filtering, only selecting those with 'warning' or 'passing' status
+%% @end
+%%--------------------------------------------------------------------
+-spec filter_nodes(ConsulResult :: list(), AllowWarning :: atom()) -> list().
+filter_nodes(Nodes, Warn) ->
+  case Warn of
+    true ->
+      lists:filter(fun({struct, Node}) ->
+                    Checks = proplists:get_value(<<"Checks">>, Node),
+                    lists:all(fun({struct, Check}) ->
+                      lists:member(proplists:get_value(<<"Status">>, Check),
+                                   [<<"passing">>, <<"warning">>])
+                              end,
+                              Checks)
+                   end,
+                   Nodes);
+    false -> Nodes
+  end.
+
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Take the list fo data as returned from the call to Consul and
 %% return it as a properly formatted list of rabbitmq cluster
 %% identifier atoms.
@@ -210,7 +236,7 @@ extract_nodes([{struct, H}|T], Nodes) ->
     "" ->
       {struct, NodeData} = proplists:get_value(<<"Node">>, H),
       Node = proplists:get_value(<<"Node">>, NodeData),
-      autocluster_util:node_name(Node);
+      maybe_add_domain(autocluster_util:node_name(Node));
     Address ->
       autocluster_util:node_name(Address)
   end,
@@ -238,9 +264,29 @@ node_list_qargs() ->
 %% @end
 %%--------------------------------------------------------------------
 -spec node_list_qargs(ClusterName :: string()) -> list().
-node_list_qargs("undefined") -> [passing];
-node_list_qargs(Cluster) -> [passing, {tag, Cluster}].
+node_list_qargs(Cluster) ->
+  ClusterTag = case Cluster of
+    "undefined" -> [];
+    _           -> [{tag, Cluster}]
+  end,
+  node_list_qargs(ClusterTag, autocluster_config:get(consul_include_nodes_with_warnings)).
 
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Build the query argument list required to fetch the node list from
+%% Consul. Unless nodes with health checks having 'warning' status are
+%% permitted, select only those with 'passing' status. Otherwise return
+%% all for further filtering
+%% @end
+%%--------------------------------------------------------------------
+-spec node_list_qargs(Args :: list(), AllowWarn :: atom()) -> list().
+node_list_qargs(Value, Warn) ->
+    case Warn of
+        true  -> Value;
+        false -> [passing | Value]
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -548,3 +594,21 @@ service_id(Service, Address) ->
 -spec service_ttl(TTL :: integer()) -> string().
 service_ttl(Value) ->
   autocluster_util:as_string(Value) ++ "s".
+
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Append Consul domain if long names are in use
+%% @end
+%%--------------------------------------------------------------------
+-spec maybe_add_domain(Domain :: atom()) -> atom().
+maybe_add_domain(Value) ->
+  case autocluster_config:get(consul_use_longname) of
+      true ->
+          list_to_atom(string:join([atom_to_list(Value),
+                                    "node",
+                                    autocluster_config:get(consul_domain)],
+                                   "."));
+      false -> Value
+  end.
