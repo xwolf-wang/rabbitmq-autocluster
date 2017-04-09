@@ -82,8 +82,8 @@ node_name(Address) ->
 %%
 extract_node_list(Response) ->
     IpLists = [[proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), Address)
-		|| {struct, Address} <- proplists:get_value(<<"addresses">>, Subset)]
-	       || {struct, Subset} <- proplists:get_value(<<"subsets">>, Response)],
+		|| Address <- proplists:get_value(<<"addresses">>, Subset)]
+	       || Subset <- proplists:get_value(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
 
