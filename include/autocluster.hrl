@@ -25,6 +25,7 @@
          {config, aws_access_key,        "AWS_ACCESS_KEY_ID",      "undefined",  string,  false},
          {config, aws_secret_key,        "AWS_SECRET_ACCESS_KEY",  "undefined",  string,  false},
          {config, aws_ec2_region,        "AWS_DEFAULT_REGION",     "undefined",  string,  false},
+         {config, aws_use_private_ip,    "AWS_USE_PRIVATE_IP",     false,        atom,    false},
 
          {config, cluster_name,          "CLUSTER_NAME",           "undefined",  string,  false}, %% Consul && etcd
 

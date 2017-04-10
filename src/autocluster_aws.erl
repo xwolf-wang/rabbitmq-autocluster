@@ -68,7 +68,6 @@ api_get_request(Service, Path) ->
     {error, Message, _} -> {error, Message}
   end.
 
-
 -spec build_instance_list_qargs(Instances :: list(), Accum :: list()) -> list().
 %% @private
 %% @doc Build the Query args for filtering instances by InstanceID.
@@ -126,14 +125,10 @@ fetch_all_autoscaling_instances(QArgs, Accum) ->
     {ok, Payload} ->
       Instances = flatten_autoscaling_datastructure(Payload),
       NextToken = get_next_token(Payload),
-      case get_all_autoscaling_instances(lists:append(Instances, Accum), NextToken) of
-        {ok, InnerInstances} ->
-          {ok, InnerInstances};
-        error -> error
-      end;
-    {error, Reason} ->
+      get_all_autoscaling_instances(lists:append(Instances, Accum), NextToken);
+    {error, Reason} = Error ->
       autocluster_log:error("Error fetching autoscaling group instance list: ~p", [Reason]),
-      error
+      Error
   end.
 
 get_autoscaling_group_node_list(error, _) -> {error, instance_discovery};
@@ -145,13 +140,13 @@ get_autoscaling_group_node_list(Instance, Tag) ->
           autocluster_log:debug("Fetching autoscaling = Group: ~p", [Group]),
           Values = get_autoscaling_instances(Instances, Group, []),
           autocluster_log:debug("Fetching autoscaling = Instances: ~p", [Values]),
-          Names = get_priv_dns_by_instance_ids(Values, Tag),
+          Names = get_hostname_by_instance_ids(Values, Tag),
           autocluster_log:debug("Fetching autoscaling = DNS: ~p", [Names]),
           {ok, [autocluster_util:node_name(N) || N <- Names]};
-        error -> error
+        error -> {error, autoscaling_group_not_found}
       end;
     error ->
-      error
+      {error, describe_autoscaling_instances}
   end.
 
 
@@ -170,41 +165,41 @@ get_autoscaling_instances([H|T], Group, Accum) ->
 get_node_list_from_tags([]) ->
   {error, no_configured_tags};
 get_node_list_from_tags(Tags) ->
-  {ok, [autocluster_util:node_name(N) || N <- get_priv_dns_by_tags(Tags)]}.
+  {ok, [autocluster_util:node_name(N) || N <- get_hostname_by_tags(Tags)]}.
 
 
-get_priv_dns_by_instance_ids(Instances, Tag) ->
+get_hostname_by_instance_ids(Instances, Tag) ->
   QArgs = build_instance_list_qargs(Instances,
                                     [{"Action", "DescribeInstances"},
                                      {"Version", "2015-10-01"}]),
   QArgs2 = lists:keysort(1, maybe_add_tag_filters(Tag, QArgs, 1)),
   Path = "/?" ++ rabbitmq_aws_urilib:build_query_string(QArgs2),
-  get_priv_dns_names(Path).
+  get_hostname_names(Path).
 
 
-get_priv_dns_by_tags(Tags) ->
+get_hostname_by_tags(Tags) ->
   QArgs = [{"Action", "DescribeInstances"}, {"Version", "2015-10-01"}],
   QArgs2 = lists:keysort(1, maybe_add_tag_filters(Tags, QArgs, 1)),
   Path = "/?" ++ rabbitmq_aws_urilib:build_query_string(QArgs2),
-  get_priv_dns_names(Path).
+  get_hostname_names(Path).
 
 
-get_priv_dns_name_from_reservation_set([], Accum) -> Accum;
-get_priv_dns_name_from_reservation_set([{"item", RI}|T], Accum) ->
+get_hostname_name_from_reservation_set([], Accum) -> Accum;
+get_hostname_name_from_reservation_set([{"item", RI}|T], Accum) ->
   InstancesSet = proplists:get_value("instancesSet", RI),
   Item = proplists:get_value("item", InstancesSet),
-  DNSName = proplists:get_value("privateDnsName", Item),
+  DNSName = proplists:get_value(select_hostname(), Item),
   if
-    DNSName == [] -> get_priv_dns_name_from_reservation_set(T, Accum);
-    true -> get_priv_dns_name_from_reservation_set(T, lists:append([DNSName], Accum))
+    DNSName == [] -> get_hostname_name_from_reservation_set(T, Accum);
+    true -> get_hostname_name_from_reservation_set(T, lists:append([DNSName], Accum))
   end.
 
-get_priv_dns_names(Path) ->
+get_hostname_names(Path) ->
   case api_get_request("ec2", Path) of
     {ok, Payload} ->
       Response = proplists:get_value("DescribeInstancesResponse", Payload),
       ReservationSet = proplists:get_value("reservationSet", Response),
-      get_priv_dns_name_from_reservation_set(ReservationSet, []);
+      get_hostname_name_from_reservation_set(ReservationSet, []);
     {error, Reason} ->
       autocluster_log:error("Error fetching node list: ~p", [Reason]),
       error
@@ -217,6 +212,14 @@ get_tags() ->
     Tags == "unused" -> [{"ignore", "me"}]; %% this is to trick dialyzer
     true -> Tags
   end.
+
+-spec select_hostname() -> string().
+select_hostname() ->
+    case autocluster_config:get(aws_use_private_ip) of
+        true  -> "privateIpAddress";
+        false -> "privateDnsName";
+        _     -> "privateDnsName"
+    end.
 
 -spec instance_id() -> string() | error.
 %% @private
