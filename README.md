@@ -168,16 +168,19 @@ The following settings impact the behavior of the AWS backend. See the AWS API C
   <dd>Cluster based upon membership in an Autoscaling Group. Set to <code>true</code> to enable.</dd>
   <dt>EC2 Tags</dt>
   <dd>Filter the cluster node list with the specified tags. Use a comma delimiter for multiple tags when specifying as an environment variable.</dd>
+  <dt>Use private IP</dt>
+  <dd>Use the private IP address returned by autoscaling as hostname, instead of the private DNS name</dd>
 </dl>
 
 **NOTE**: If this is your first time setting up RabbitMQ with the autoscaling cluster and are doing so for R&D purposes, you may want to check out the [gavinmroy/alpine-rabbitmq-autocluster](https://github.com/gmr/alpine-rabbitmq-autocluster) Docker Image repository for a working example of the plugin using a CloudFormation template that creates everything required for an Autoscaling Group based cluster.
 
 #### Details
 
-| Environment Variable | Setting Key         | Type           | Default   |
-|----------------------|---------------------|----------------|-----------|
-| ``AWS_AUTOSCALING``  | ``aws_autoscaling`` | ``atom``       | ``false`` |
-| ``AWS_EC2_TAGS``     | ``aws_ec2_tags``    | ``[string()]`` |           |
+| Environment Variable   | Setting Key            | Type           | Default   |
+|------------------------|------------------------|----------------|-----------|
+| ``AWS_AUTOSCALING``    | ``aws_autoscaling``    | ``atom``       | ``false`` |
+| ``AWS_EC2_TAGS``       | ``aws_ec2_tags``       | ``[string()]`` |           |
+| ``AWS_USE_PRIVATE_IP`` | ``aws_use_private_ip`` | ``atom``       | ``false`` |
 
 Notes
 '''''
