@@ -74,9 +74,9 @@ make_request() ->
 %% @end
 %%
 extract_node_list(Response) ->
-    IpLists = [[proplists:get_value(<<"ip">>, Address)
-		||  Address <- proplists:get_value(<<"addresses">>, Subset)]
-	       || Subset <- proplists:get_value(<<"subsets">>, Response)],
+    IpLists = [[maps:get(<<"ip">>, Address)
+		||  Address <- maps:get(<<"addresses">>, Subset)]
+	       || Subset <- maps:get(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
 
