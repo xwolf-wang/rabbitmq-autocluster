@@ -63,7 +63,10 @@ unregister() ->
 %%
 api_get_request(Service, Path) ->
   case rabbitmq_aws:get(Service, Path) of
-    {ok, {_Headers, Payload}} -> {ok, Payload};
+    {ok, {_Headers, Payload}} ->
+          autocluster_log:debug("AWS request: ~s~nResponse: ~p~n",
+                                [Path, Payload]),
+          {ok, Payload};
     {error, {credentials, _}} -> {error, credentials};
     {error, Message, _} -> {error, Message}
   end.
