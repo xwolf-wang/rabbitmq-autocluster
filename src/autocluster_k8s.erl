@@ -81,9 +81,9 @@ node_name(Address) ->
 %% @end
 %%
 extract_node_list(Response) ->
-    IpLists = [[proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), Address)
-		|| Address <- proplists:get_value(<<"addresses">>, Subset)]
-	       || Subset <- proplists:get_value(<<"subsets">>, Response)],
+    IpLists = [[maps:get(rabbit_data_coercion:to_binary(autocluster_config:get(k8s_address_type)), Address)
+		||  Address <- maps:get(<<"addresses">>, Subset)]
+	       || Subset <- maps:get(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
 

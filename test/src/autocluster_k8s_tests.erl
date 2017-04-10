@@ -65,5 +65,4 @@ node_name_suffix_test() ->
   ?assertEqual(Expectation, autocluster_k8s:node_name(<<"rabbitmq-0">>)).
 
 json_decode(Binary) ->
-    {ok, Json} = rabbit_misc:json_decode(Binary),
-    {ok, rabbit_misc:json_to_term(Json)}.
+    rabbit_json:try_decode(rabbit_data_coercion:to_binary(Binary)).
