@@ -216,8 +216,9 @@ get_tags() ->
 -spec select_hostname() -> string().
 select_hostname() ->
     case autocluster_config:get(aws_use_private_ip) of
-        true -> "privateIpAddress";
-        false -> "privateDnsName"
+        true  -> "privateIpAddress";
+        false -> "privateDnsName";
+        _     -> "privateDnsName"
     end.
 
 -spec instance_id() -> string() | error.
