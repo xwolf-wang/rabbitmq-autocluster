@@ -67,7 +67,7 @@ make_request() ->
       [{"Authorization", ["Bearer ", Token1]}],
       [{ssl, [{cacertfile, autocluster_config:get(k8s_cert_path)}]}]).
 
-%% @spec node_name(k8s_endpoint) -> list()
+%% @spec node_name(k8s_endpoint()) -> list()
 %% @doc Return a full rabbit node name, appending hostname suffix
 %% @end
 %%
