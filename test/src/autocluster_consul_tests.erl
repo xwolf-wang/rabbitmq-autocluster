@@ -486,7 +486,7 @@ register_failure_test_() ->
           meck:new(autocluster_log, [passthrough]),
           meck:expect(autocluster_consul, build_registration_body, 0, {foo}),
           meck:expect(autocluster_log, error, 2, ok),
-          ?assertEqual({error, {bad_term, {foo}}}, autocluster_consul:register()),
+          ?assertEqual({error, badarg}, autocluster_consul:register()),
           ?assert(meck:validate(autocluster_consul)),
           meck:unload(autocluster_consul),
           meck:unload(autocluster_log)
@@ -641,9 +641,7 @@ unregister_test_() ->
   }.
 
 json_decode(Body) ->
-    Binary = rabbit_data_coercion:to_binary(Body),
-    {ok, Json} = rabbit_misc:json_decode(Binary),
-    {ok, rabbit_misc:json_to_term(Json)}.
+    rabbit_json:try_decode(rabbit_data_coercion:to_binary(Body)).
 
 with_warnings() ->
     "[{\"Node\": {\"Node\": \"rabbit2.internal.domain\", \"Address\": \"10.20.16.160\"}, \"Checks\": [{\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"warning\", \"ServiceID\": \"rabbitmq:172.172.16.4.50\", \"Output\": \"\"}, {\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"172.16.4.51\", \"Port\": 5672, \"ID\": \"rabbitmq:172.16.4.51\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}, {\"Node\": {\"Node\": \"rabbit1.internal.domain\", \"Address\": \"10.20.16.159\"}, \"Checks\": [{\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"critical\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"172.172.16.51\", \"Port\": 5672, \"ID\": \"rabbitmq:172.172.16.51\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}]".

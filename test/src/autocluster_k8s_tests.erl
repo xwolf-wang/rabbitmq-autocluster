@@ -40,5 +40,4 @@ extract_node_list_real_test() ->
   ?assertEqual(Expecation, autocluster_k8s:extract_node_list(Response)).
 
 json_decode(Binary) ->
-    {ok, Json} = rabbit_misc:json_decode(Binary),
-    {ok, rabbit_misc:json_to_term(Json)}.
+    rabbit_json:try_decode(rabbit_data_coercion:to_binary(Binary), []).

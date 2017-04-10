@@ -201,11 +201,13 @@ delete(Scheme, Host, Port, Path, Args, Body) ->
 %%
 decode_body(_, []) -> [];
 decode_body(?CONTENT_JSON, Body) ->
-    case rabbit_misc:json_decode(rabbit_data_coercion:to_binary(Body)) of
-        {ok, Value} ->
-            rabbit_misc:json_to_term(Value);
-        error ->
-            []
+    case rabbit_json:try_decode(rabbit_data_coercion:to_binary(Body), []) of
+        {ok, Value} -> Value;
+        {error, Err}  ->
+            autocluster_log:error("HTTP client could not decode a JSON payload "
+                                  "(JSON parser returned an error): ~p.~n",
+                                  [Err]),
+            {ok, []}
     end.
 
 %% @private

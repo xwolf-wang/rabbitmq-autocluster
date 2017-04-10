@@ -275,13 +275,14 @@ as_proplist([Tuple | _] = Json) when is_tuple(Tuple) ->
 as_proplist([]) ->
     [];
 as_proplist(List) when is_list(List) ->
-    case rabbit_misc:json_decode(List) of
-        {ok, {struct, _} = Json} ->
+    Value = rabbit_data_coercion:to_binary(List),
+    case rabbit_json:try_decode(Value) of
+        {ok, Json} ->
             [{binary_to_list(K), binary_to_list(V)}
-             || {K, V} <- rabbit_misc:json_to_term(Json)];
-        _ ->
-            autocluster_log:error("Unexpected data type for proplist value: ~p. JSON parser returned an error!~n",
-                                  [List]),
+             || {K, V} <- maps:to_list(Json)];
+        {error, Error} ->
+            autocluster_log:error("Unexpected data type for proplist value: ~p. JSON parser returned an error: ~p!~n",
+                                  [Value, Error]),
             []
     end;
 as_proplist(Value) ->

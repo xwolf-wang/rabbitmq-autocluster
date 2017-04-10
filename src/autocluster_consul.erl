@@ -71,10 +71,12 @@ nodelist() ->
                               autocluster_config:get(consul_svc)],
                              node_list_qargs()) of
     {ok, Nodes} ->
-      {ok, extract_nodes(
+      Result = extract_nodes(
              filter_nodes(Nodes,
-                          autocluster_config:get(consul_include_nodes_with_warnings)))};
-    Error       -> Error
+                          autocluster_config:get(consul_include_nodes_with_warnings))),
+      {ok, Result};
+    {error, _} = Error ->
+          Error
   end.
 
 
@@ -194,9 +196,9 @@ filter_nodes(Nodes, Warn) ->
   case Warn of
     true ->
       lists:filter(fun(Node) ->
-                    Checks = proplists:get_value(<<"Checks">>, Node),
+                    Checks = maps:get(<<"Checks">>, Node),
                     lists:all(fun(Check) ->
-                      lists:member(proplists:get_value(<<"Status">>, Check),
+                      lists:member(maps:get(<<"Status">>, Check),
                                    [<<"passing">>, <<"warning">>])
                               end,
                               Checks)
@@ -230,12 +232,12 @@ extract_nodes(Data) -> extract_nodes(Data, []).
     -> list().
 extract_nodes([], Nodes)    -> Nodes;
 extract_nodes([H|T], Nodes) ->
-  Service = proplists:get_value(<<"Service">>, H),
-  Value = proplists:get_value(<<"Address">>, Service),
+  Service = maps:get(<<"Service">>, H),
+  Value = maps:get(<<"Address">>, Service),
   NodeName = case autocluster_util:as_string(Value) of
     "" ->
-      NodeData = proplists:get_value(<<"Node">>, H),
-      Node = proplists:get_value(<<"Node">>, NodeData),
+      NodeData = maps:get(<<"Node">>, H),
+      Node = maps:get(<<"Node">>, NodeData),
       maybe_add_domain(autocluster_util:node_name(Node));
     Address ->
       autocluster_util:node_name(Address)
@@ -297,7 +299,7 @@ node_list_qargs(Value, Warn) ->
 -spec registration_body() -> {ok, Body :: binary()} | {error, atom()}.
 registration_body() ->
   Payload = autocluster_consul:build_registration_body(),
-  registration_body(rabbit_misc:json_encode(Payload)).
+  registration_body(rabbit_json:try_encode(Payload)).
 
 
 %%--------------------------------------------------------------------
@@ -312,7 +314,7 @@ registration_body() ->
                                     {error, Reason :: atom()})
   -> {ok, Body :: binary()} | {error, Reason :: atom()}.
 registration_body({ok, Body}) ->
-  {ok, list_to_binary(Body)};
+  {ok, rabbit_data_coercion:to_binary(Body)};
 registration_body({error, Reason}) ->
   autocluster_log:error("Error serializing the request body: ~p",
     [Reason]),
