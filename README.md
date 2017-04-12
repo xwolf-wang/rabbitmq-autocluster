@@ -47,7 +47,7 @@ Binary Releases
 ---------------
 
 Binary releases of autocluster can be found on the
-[GitHub Releases](https://github.com/aweber/rabbitmq-autocluster/releases) page.
+[GitHub Releases](https://github.com/rabbitmq/rabbitmq-autocluster/releases) page.
 
 ![https://github.com/rabbitmq/rabbitmq-autocluster/releases](https://img.shields.io/github/release/rabbitmq/rabbitmq-autocluster.svg)
 
