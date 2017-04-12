@@ -15,7 +15,9 @@
          node_name/1,
          parse_port/1,
          augment_nodelist/1,
-         stringify_error/1]).
+         stringify_error/1,
+         as_proplist/1
+        ]).
 
 -include("autocluster.hrl").
 
@@ -307,3 +309,31 @@ stringify_error({error, Str}) when is_list(Str) ->
     {error, Str};
 stringify_error({error, Term}) ->
     {error, lists:flatten(io_lib:format("~w", [Term]))}.
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Returns a proplist from a JSON structure (environment variable) or
+%% the settings key (already a proplist).
+%% @end
+%%--------------------------------------------------------------------
+-spec as_proplist(Value :: string() | [{string(), string()}]) ->
+                         [{string(), string()}].
+as_proplist([Tuple | _] = Json) when is_tuple(Tuple) ->
+    Json;
+as_proplist([]) ->
+    [];
+as_proplist(List) when is_list(List) ->
+    case rabbit_misc:json_decode(List) of
+        {ok, {struct, _} = Json} ->
+            [{binary_to_list(K), binary_to_list(V)}
+             || {K, V} <- rabbit_misc:json_to_term(Json)];
+        _ ->
+            autocluster_log:error("Unexpected data type for proplist value: ~p. JSON parser returned an error!~n",
+                                  [List]),
+            []
+    end;
+as_proplist(Value) ->
+    autocluster_log:error("Unexpected data type for proplist value: ~p.~n",
+                          [Value]),
+    [].
