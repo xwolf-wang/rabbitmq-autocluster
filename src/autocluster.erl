@@ -124,6 +124,10 @@ run_steps([Step|Rest]) ->
     State = get_run_steps_state(),
     StopOnError = failure_mode() =:= stop,
     case Step(State) of
+        {error, unconfigured} ->
+            autocluster_log:info("Skip step ~s. Reason: backend unconfigured. ",
+                [StepName]),
+            ok;
         {error, Reason} when StopOnError =:= false ->
             autocluster_log:error("Failed on step ~s, but will start nevertheless. Reason was: ~s.",
                                   [StepName, Reason]),
@@ -210,6 +214,8 @@ acquire_startup_lock(State) ->
         not_supported ->
             maybe_delay_startup(),
             {ok, State};
+        {error, unconfigured} ->
+            {error, unconfigured};
         {error, Reason} ->
             {error, lists:flatten(io_lib:format("Failed to acquire startup lock: ~s", [Reason]))}
     end.
@@ -295,8 +301,11 @@ register_in_backend(State) ->
     case backend_register(State) of
         ok ->
             {ok, State};
+        {error, unconfigured} ->
+            {error, unconfigured};
         {error, Reason} ->
             {error, io_lib:format("Failed to register in backend: ~s", [Reason])}
+
     end.
 
 %%--------------------------------------------------------------------
@@ -312,6 +321,8 @@ release_startup_lock(State) ->
     case backend_unlock(State) of
         ok ->
             {ok, State};
+        {error, unconfigured} ->
+            {error, unconfigured};
         {error, Reason} ->
             {error, io_lib:format("Failed to release startup lock: ~s", [Reason])}
     end.
@@ -371,19 +382,34 @@ startup_delay(Max) ->
 
 -spec backend_register(#startup_state{}) -> ok | {error, iolist()}.
 backend_register(#startup_state{backend_module = Mod}) ->
-    Mod:register().
+    case erlang:function_exported(Mod, register, 0) of
+        true -> Mod:register();
+        false -> {error, unconfigured}
+    end.
 
 -spec backend_unlock(#startup_state{}) -> ok | {error, iolist()}.
 backend_unlock(#startup_state{backend_module = Mod, startup_lock_data = Data}) ->
-    Mod:unlock(Data).
+    case erlang:function_exported(Mod, unlock, 1) of
+        true -> Mod:unlock(Data);
+        false -> {error, unconfigured}
+    end.
+
 
 -spec backend_lock(#startup_state{}) -> ok | {ok, LockData :: term()} | not_supported | {error, iolist()}.
 backend_lock(#startup_state{backend_module = Module}) ->
-    Module:lock(atom_to_list(node())).
+    case erlang:function_exported(Module, lock, 1) of
+        true -> Module:lock(atom_to_list(node()));
+        false -> {error, unconfigured}
+    end.
+
+
 
 -spec backend_nodelist(#startup_state{}) -> {ok, [node()]} | {error, iolist()}.
 backend_nodelist(#startup_state{backend_module = Module}) ->
-    Module:nodelist().
+    case erlang:function_exported(Module, nodelist, 0) of
+        true -> Module:nodelist();
+        false -> {error, unconfigured}
+    end.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -471,7 +497,7 @@ detect_backend(k8s) ->
   {ok, k8s, autocluster_k8s};
 
 detect_backend(unconfigured) ->
-  {error, "Backend is not configured"};
+  {error, unconfigured};
 
 detect_backend(Backend) ->
   {error, io_lib:format("Unsupported backend: ~s.", [Backend])}.

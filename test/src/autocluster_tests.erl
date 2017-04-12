@@ -91,6 +91,8 @@ initialize_backend_handle_error_test_() ->
                {error, _} = autocluster:initialize_backend(#startup_state{})
        end} || BackendOption <- Cases].
 
+
+
 acquire_startup_lock_store_lock_data_on_success_test_() ->
     autocluster_testing:with_mock(
       [autocluster_etcd],
@@ -248,6 +250,45 @@ choose_best_node_empty_list_test() ->
 
 choose_best_node_only_self_test() ->
     ?assertEqual(undefined, autocluster:choose_best_node([#augmented_node{name = node()}])).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Tests with empty backend, RabbitMQ has to start even if the backend is empty
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+initialize_backend_empty_test_() ->
+    [ {eunit_title("Backend is empty", []),
+        fun () ->
+            autocluster_testing:reset(),
+            {error, unconfigured} = autocluster:initialize_backend(#startup_state{})
+        end} ].
+
+
+
+acquire_startup_lock_backend_empty_test_() ->
+    [ {eunit_title("Acquire startup lock with empty backend", []),
+        fun () ->
+            autocluster_testing:reset(),
+            {error, unconfigured} = autocluster:acquire_startup_lock(#startup_state{})
+        end} ].
+
+release_startup_lock_backend_empty_test_() ->
+    [ {eunit_title("Release startup lock with empty backend", []),
+        fun () ->
+            autocluster_testing:reset(),
+            {error, unconfigured} = autocluster:release_startup_lock(#startup_state{})
+        end} ].
+
+
+register_in_backend_backend_empty_test_() ->
+    [ {eunit_title("Register in backend with empty backend", []),
+        fun () ->
+            autocluster_testing:reset(),
+            {error, unconfigured} = autocluster:register_in_backend(#startup_state{})
+        end} ].
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Helpers
