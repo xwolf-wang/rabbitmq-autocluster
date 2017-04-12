@@ -58,6 +58,8 @@ Check for version compatibility in the release notes.
 Installation
 ------------
 
+This plugin is installed the same way as [other RabbitMQ plugins](http://www.rabbitmq.com/plugins.html).
+
 1. Place both ``autocluster-%%VSN%%.ez`` and the ``rabbitmq_aws-%%VSN%%.ez`` plugin files in the RabbitMQ plugins directory.
 2. Run ``rabbitmq-plugins enable autocluster``.
 3. Configure the plugin.
