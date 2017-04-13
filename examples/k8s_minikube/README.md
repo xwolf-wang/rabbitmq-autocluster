@@ -1,5 +1,5 @@
 
-Test RabbitMQ-Autoclsuter on K8s
+Test RabbitMQ-Autoclsuter on K8s through Minikube
 
  1. Install [`kubectl`](https://kubernetes.io/docs/tasks/kubectl/install/): 
 ```
@@ -25,10 +25,14 @@ curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.17.1/minik
 ```
 
 3. Start `minikube` virtual machine:
-`minikube start --cpus=2 --memory=2040 --vm-driver=virtualbox` 
+```
+minikube start --cpus=2 --memory=2040 --vm-driver=virtualbox
+```
 
 4. Create a namespace only for RabbitMQ test:
-`kubectl create namespace test-rabbitmq`
+```
+kubectl create namespace test-rabbitmq
+```
 
 5. Run the `etcd` image and expose it:
 ```
@@ -44,11 +48,15 @@ docker build  . -t rabbitmq-autocluster
 ```
 Wait until the image is created..
 
-7.  Deploy the `YAML` (see above the definition) file:
-`kubectl create -f examples/k8s_minikube/rabbitmq.yaml`
+7.  Deploy the `YAML` file:
+
+```
+kubectl create -f examples/k8s_minikube/rabbitmq.yaml
+```
 
 8. Check the cluster status:
- Wait a few seconds....then 
+Wait  few seconds....then 
+
 ```
 FIRST_POD=$(kubectl get pods --namespace test-rabbitmq -l 'app=rabbitmq' -o jsonpath='{.items[0].metadata.name }')
 kubectl exec --namespace=test-rabbitmq $FIRST_POD rabbitmqctl cluster_status
@@ -74,10 +82,37 @@ kubectl expose deployment rabbitmq-deployment --port 15672  --type=LoadBalancer 
 
 minikube service rabbitmq-deployment --namespace=test-rabbitmq 
 
-kubectl scale rabbitmq-deployment --replicas=4
 ```
 
-10. Optional enable the K8s dashboard:
+10. Enable the K8s dashboard (Optional):
 ```
 minikube dashboard 
+```
+
+11. Scale up the RabbitMQ cluster
+```
+ kubectl scale deployment/rabbitmq-deployment --namespace=test-rabbitmq --replicas=6
+```
+
+Excute again:
+```
+kubectl exec --namespace=test-rabbitmq $FIRST_POD rabbitmqctl cluster_status
+```
+you should have 6 nodes:
+```
+Cluster status of node 'rabbit@172.17.0.9' ...
+[{nodes,[{disc,['rabbit@172.17.0.10','rabbit@172.17.0.11',
+                'rabbit@172.17.0.12','rabbit@172.17.0.7','rabbit@172.17.0.8',
+                'rabbit@172.17.0.9']}]},
+ {running_nodes,['rabbit@172.17.0.12','rabbit@172.17.0.11',
+                 'rabbit@172.17.0.10','rabbit@172.17.0.7','rabbit@172.17.0.8',
+                 'rabbit@172.17.0.9']},
+ {cluster_name,<<"rabbit@rabbitmq-deployment-3409700153-1rr4x">>},
+ {partitions,[]},
+ {alarms,[{'rabbit@172.17.0.12',[]},
+          {'rabbit@172.17.0.11',[]},
+          {'rabbit@172.17.0.10',[]},
+          {'rabbit@172.17.0.7',[]},
+          {'rabbit@172.17.0.8',[]},
+          {'rabbit@172.17.0.9',[]}]}]
 ```
