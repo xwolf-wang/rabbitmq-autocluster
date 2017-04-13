@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: rabbitmq-deployment
+  namespace: test-rabbitmq
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq-autocluster
+        image: rabbitmq-autocluster
+        # `Never` as we are not using registry in our `minikube` setup
+        imagePullPolicy: Never
+        env:
+          # For consupmption by rabbitmq-env.conf
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: RABBITMQ_USE_LONGNAME
+            value: "true"
+          - name: ERLANG_COOKIE
+            value: "test"
+          # - name: RABBITMQ_ERLANG_COOKIE
+          #   value: "secret_cookie"
+          - name: RABBITMQ_NODENAME
+            value: "rabbit@$(MY_POD_IP)"
+          - name: AUTOCLUSTER_TYPE
+            value: "etcd"
+          - name: AUTOCLUSTER_DELAY
+            value: "60"
+          - name: ETCD_HOST
+            value: "etcd"
+          - name: AUTOCLUSTER_CLEANUP
+            value: "true"
+        # command:
+        #   - rabbitmq-server

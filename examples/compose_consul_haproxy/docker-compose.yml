@@ -2,7 +2,6 @@ version: "2"
 services:
    rabbit:
     environment:
-      - RABBITMQ_ERLANG_COOKIE='secret_cookie'
       - TCP_PORTS=15672, 5672
       - AUTOCLUSTER_TYPE=consul
       - AUTOCLUSTER_DELAY=60
