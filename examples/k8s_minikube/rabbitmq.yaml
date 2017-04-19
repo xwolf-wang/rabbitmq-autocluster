@@ -37,5 +37,5 @@ spec:
             value: "etcd"
           - name: AUTOCLUSTER_CLEANUP
             value: "true"
-        # command:
-        #   - rabbitmq-server
+          - name: CLEANUP_WARN_ONLY
+            value: "false"
