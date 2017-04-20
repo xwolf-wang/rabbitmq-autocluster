@@ -3,7 +3,7 @@ RabbitMQ Autocluster
 
 A RabbitMQ plugin that clusters nodes automatically using a number of peer discovery mechanisms:
 
-* [Consul](https://consul.io>),
+* [Consul](https://consul.io),
 * [etcd2](https://github.com/coreos/etcd),
 * DNS A records,
 * [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
@@ -67,7 +67,7 @@ This plugin is installed the same way as [other RabbitMQ plugins](http://www.rab
 Alternatively, there is a pre-built Docker Image available at on DockerHub as [aweber/rabbitmq-autocluster](https://hub.docker.com/r/aweber/rabbitmq-autocluster/).
 
 **Note**
-As of version ``0.5`` the autocluster plugin does not have a default backend configured. See the [Project Wiki](https://github.com/aweber/rabbitmq-autocluster/wiki) for configuration details.
+As of version ``0.5`` the autocluster plugin does not have a default backend configured. See the [Project Wiki](https://github.com/rabbitmq/rabbitmq-autocluster/wiki) for configuration details.
 
 Configuration
 -------------
@@ -83,6 +83,7 @@ Configuration
   * [Consul configuration](#consul-configuration)
      * [Configuration Details](#configuration-details)
      * [Example rabbitmq.config](#example-rabbitmqconfig)
+     * [Example docker compose](#example-docker-compose)
   * [DNS configuration](#dns-configuration)
      * [Example Configuration](#example-configuration-1)
      * [Troubleshooting](#troubleshooting)
@@ -366,6 +367,13 @@ The following settings impact the configuration of the [Consul](http://consul.io
                  ].
 ```
 
+#### Example docker compose
+
+The [example](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable/examples/compose_consul_haproxy) shows how to create a dynamic RabbitMQ cluster, using:
+- [Docker compose](https://docs.docker.com/compose/)
+- [Consul](https://www.consul.io) 
+- [HA proxy](https://github.com/docker/dockercloud-haproxy)
+
 ### DNS configuration
 
 The following setting applies only to the DNS backend:
@@ -597,17 +605,21 @@ Here's the base pattern for how I test against Consul when developing:
 
 ```bash
 make dist
-docker build -t gavinmroy/autocluster .
+docker build -t rabbitmq-autocluster .
 
 docker network create rabbitmq_network
 
-docker run --rm -t -i --net=rabbitmq_network --name=consul -p 8500:8500 gavinmroy/alpine-consul:0.5.2-0
+docker run --rm -t -i --net=rabbitmq_network --name=consul -p 8500:8500 consul
 
-docker run --rm -t -i --link=consul --net=rabbitmq_network --name=node0 -e AUTOCLUSTER_TYPE=consul -e CONSUL_HOST=consul -e CONSUL_PORT=8500 -e CONSUL_SERVICE_TTL=60  -e AUTOCLUSTER_CLEANUP=true -e CLEANUP_WARN_ONLY=false -e CONSUL_SVC_ADDR_AUTO=true -p 15672:15672 gavinmroy/autocluster
+docker run --rm -t -i --net=rabbitmq_network --name=node0 -e AUTOCLUSTER_TYPE=consul -e CONSUL_HOST=consul -e CONSUL_PORT=8500 -e CONSUL_SERVICE_TTL=60  -e AUTOCLUSTER_CLEANUP=true -e CLEANUP_WARN_ONLY=false -e CONSUL_SVC_ADDR_AUTO=true -p 15672:15672 rabbitmq-autocluster
 
-docker run --rm -t -i --link=node0 --net=rabbitmq_network --name=node1 -e RABBITMQ_NODE_TYPE=ram -e AUTOCLUSTER_TYPE=consul -e CONSUL_HOST=consul -e CONSUL_PORT=8500 -e CONSUL_SERVICE_TTL=60  -e AUTOCLUSTER_CLEANUP=true -e CLEANUP_WARN_ONLY=false -e CONSUL_SVC_ADDR_AUTO=true gavinmroy/autocluster
+docker run --rm -t -i --net=rabbitmq_network --name=node1 -e RABBITMQ_NODE_TYPE=ram -e AUTOCLUSTER_TYPE=consul -e CONSUL_HOST=consul -e CONSUL_PORT=8500 -e CONSUL_SERVICE_TTL=60  -e AUTOCLUSTER_CLEANUP=true -e CLEANUP_WARN_ONLY=false -e CONSUL_SVC_ADDR_AUTO=true rabbitmq-autocluster
 
-docker run --rm -t -i --link=node1 --net=rabbitmq_network --name=node2 -e RABBITMQ_NODE_TYPE=ram -e AUTOCLUSTER_TYPE=consul -e CONSUL_HOST=consul -e CONSUL_PORT=8500 -e CONSUL_SERVICE_TTL=60  -e AUTOCLUSTER_CLEANUP=true -e CLEANUP_WARN_ONLY=false -e CONSUL_SVC_ADDR_AUTO=true gavinmroy/autocluster
+docker run --rm -t -i --net=rabbitmq_network --name=node2 -e RABBITMQ_NODE_TYPE=ram -e AUTOCLUSTER_TYPE=consul -e CONSUL_HOST=consul -e CONSUL_PORT=8500 -e CONSUL_SERVICE_TTL=60  -e AUTOCLUSTER_CLEANUP=true -e CLEANUP_WARN_ONLY=false -e CONSUL_SVC_ADDR_AUTO=true rabbitmq-autocluster
+
+- Consul managent: http://localhost:8500/ui
+- RabbitMQ cluster: http://localhost:15672/
+
 ```
 
 License
