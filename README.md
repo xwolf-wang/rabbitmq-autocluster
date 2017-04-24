@@ -31,9 +31,13 @@ There are two branches in this repository that target different RabbitMQ
 release series:
 
 * [stable](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable) targets RabbitMQ ``3.6.x`` (current ``stable`` RabbitMQ branch)
-* [master](https://github.com/rabbitmq/rabbitmq-autocluster/tree/master) targets RabbitMQ ``3.7.x`` (current ``master`` RabbitMQ branch)
+* [master](https://github.com/rabbitmq/rabbitmq-autocluster/tree/master) targets RabbitMQ ``3.7.x`` (current ``master`` RabbitMQ branch).
 
 Please take this into account when building this plugin from source.
+
+Please also note that key ideas of this plugin have been incorporated into RabbitMQ master
+branch and will be included into `3.7.0`. This plugin therefore will become a collection
+of backends (e.g. AWS and etcd2) rather than a wholesale alternative cluster formation implementation.
 
 
 Supported Erlang Versions
@@ -49,7 +53,7 @@ Binary Releases
 Binary releases of autocluster can be found on the
 [GitHub Releases](https://github.com/rabbitmq/rabbitmq-autocluster/releases) page.
 
-The most recent release is [0.7.0-RC1](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.7.0-rc1) that
+The most recent release is [0.7.0](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.7.0) that
 targets RabbitMQ `3.6.9` or later.
 
 Check for version compatibility in the release notes.
