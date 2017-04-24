@@ -44,7 +44,7 @@ Supported Erlang Versions
 -------------------------
 
 This plugin requires Erlang/OTP 17.5 or later.
-Also see [RabbitMQ Erlang version requirements](http://next.rabbitmq.com/which-erlang.html) guide, too.
+Also see the [RabbitMQ Erlang version requirements](http://next.rabbitmq.com/which-erlang.html) guide.
 
 
 Binary Releases
