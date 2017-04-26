@@ -381,36 +381,31 @@ startup_delay(Max) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec backend_register(#startup_state{}) -> ok | {error, iolist()}.
+backend_register(#startup_state{backend_module = unconfigured}) ->
+    {error, unconfigured};
 backend_register(#startup_state{backend_module = Mod}) ->
-    case erlang:function_exported(Mod, register, 0) of
-        true -> Mod:register();
-        false -> {error, unconfigured}
-    end.
+    Mod:register().
 
 -spec backend_unlock(#startup_state{}) -> ok | {error, iolist()}.
+backend_unlock(#startup_state{backend_module = unconfigured}) ->
+    {error, unconfigured};
 backend_unlock(#startup_state{backend_module = Mod, startup_lock_data = Data}) ->
-    case erlang:function_exported(Mod, unlock, 1) of
-        true -> Mod:unlock(Data);
-        false -> {error, unconfigured}
-    end.
+    Mod:unlock(Data).
 
 
 -spec backend_lock(#startup_state{}) -> ok | {ok, LockData :: term()} | not_supported | {error, iolist()}.
+backend_lock(#startup_state{backend_module = unconfigured}) ->
+    {error, unconfigured};
 backend_lock(#startup_state{backend_module = Module}) ->
-    case erlang:function_exported(Module, lock, 1) of
-        true -> Module:lock(atom_to_list(node()));
-        false -> {error, unconfigured}
-    end.
+    Module:lock(atom_to_list(node())).
 
 
 
 -spec backend_nodelist(#startup_state{}) -> {ok, [node()]} | {error, iolist()}.
+backend_nodelist(#startup_state{backend_module = unconfigured}) ->
+    {error, unconfigured};
 backend_nodelist(#startup_state{backend_module = Module}) ->
-    case erlang:function_exported(Module, nodelist, 0) of
-        true -> Module:nodelist();
-        false -> {error, unconfigured}
-    end.
-
+    Module:nodelist().
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Misc Method(s)

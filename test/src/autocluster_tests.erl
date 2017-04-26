@@ -260,7 +260,8 @@ initialize_backend_empty_test_() ->
     [ {eunit_title("Backend is empty", []),
         fun () ->
             autocluster_testing:reset(),
-            {error, unconfigured} = autocluster:initialize_backend(#startup_state{})
+            {error, unconfigured} = autocluster:initialize_backend(
+                autocluster:new_startup_state())
         end} ].
 
 
@@ -269,14 +270,16 @@ acquire_startup_lock_backend_empty_test_() ->
     [ {eunit_title("Acquire startup lock with empty backend", []),
         fun () ->
             autocluster_testing:reset(),
-            {error, unconfigured} = autocluster:acquire_startup_lock(#startup_state{})
+            {error, unconfigured} = autocluster:acquire_startup_lock(
+                autocluster:new_startup_state())
         end} ].
 
 release_startup_lock_backend_empty_test_() ->
     [ {eunit_title("Release startup lock with empty backend", []),
         fun () ->
             autocluster_testing:reset(),
-            {error, unconfigured} = autocluster:release_startup_lock(#startup_state{})
+            {error, unconfigured} = autocluster:release_startup_lock(
+                autocluster:new_startup_state())
         end} ].
 
 
@@ -284,9 +287,17 @@ register_in_backend_backend_empty_test_() ->
     [ {eunit_title("Register in backend with empty backend", []),
         fun () ->
             autocluster_testing:reset(),
-            {error, unconfigured} = autocluster:register_in_backend(#startup_state{})
+            {error, unconfigured} = autocluster:register_in_backend(
+                autocluster:new_startup_state())
         end} ].
 
+nodelist_backend_empty_test_() ->
+    [ {eunit_title("Register in nodelist with empty backend", []),
+        fun () ->
+            autocluster_testing:reset(),
+            {error, unconfigured} = autocluster:backend_nodelist(
+                autocluster:new_startup_state())
+        end} ].
 
 
 
