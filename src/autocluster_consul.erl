@@ -684,7 +684,7 @@ create_session(Name, TTL) ->
                                 {'TTL', list_to_atom(service_ttl(TTL))}]) of
         {ok, Response} ->
             {ok, get_session_id(Response)};
-        {error, Err} ->
+        {error, _} = Err ->
             Err
     end.
 
@@ -820,7 +820,7 @@ wait_for_lock_release(false, _, _) -> ok;
 wait_for_lock_release(_, Index, Wait) ->
     case consul_kv_read(startup_lock_path(),
                         maybe_add_acl([{index, Index},
-                                       {wait, service_ttl(integer_to_list(Wait))}])) of
+                                       {wait, service_ttl(Wait)}])) of
         {ok, _}          -> ok;
         {error, _} = Err -> Err
     end.
