@@ -1,16 +1,18 @@
 %%==============================================================================
 %% @author Gavin M. Roy <gavinr@aweber.com>
 %% @copyright 2015-2016 AWeber Communications
+%% @copyright 2017 Pivotal Software, Inc
 %% @doc
-%% Startup happens in 3 stages:
-%% 1) Acquiring startup lock, choosing best node to cluster with (if
-%%    any) and doing clustering.
-%% 2) Register broker in backend after it's ready to serve client
+%%
+%% Startup and cluster formation uses 3 boot steps executed in order:
+%%
+%% 1) Acquiring a startup lock, choosing the best node to cluster with (if
+%%    any) and clustering.
+%% 2) Registering current node with the backend after it's ready to serve client
 %%    requests.
-%% 3) Release startup lock. So this stage can run independently even
-%%    if previous phase failed somewhere in the middle. It matters
-%%    when we are running in `ignore` failure mode, as we don't want
-%%    to hold the lock for infinite amount of time.
+%% 3) Releasing the startup lock. This step is executed even
+%%    if an earlier phase errored  as we don't want
+%%    to hold the lock forever.
 %% @end
 %%==============================================================================
 -module(autocluster).
@@ -21,27 +23,27 @@
          boot_step_release_lock/0]).
 
 -rabbit_boot_step({autocluster_discover_and_join,
-                   [{description, <<"Automated cluster configuration - lock, discover and join">>},
+                   [{description, <<"rabbitmq-autocluster: lock acquisition, discovery and clustering">>},
                     {mfa,         {autocluster, boot_step_discover_and_join, []}},
                     {enables,     pre_boot}]}).
 
 -rabbit_boot_step({autocluster_register,
-                   [{description, <<"Automated cluster configuration - register">>},
+                   [{description, <<"rabbitmq-autocluster: registeration with the backend">>},
                     {mfa,         {autocluster, boot_step_register, []}},
                     {requires,    notify_cluster}]}).
 
 -rabbit_boot_step({autocluster_unlock,
-                   [{description, <<"Automated cluster configuration - release lock">>},
+                   [{description, <<"rabbitmq-autocluster: lock release">>},
                     {mfa,        {autocluster, boot_step_release_lock, []}},
                     {requires,   autocluster_register}]}).
 
-%% Boot sequence steps - exported for better diagnostics, so we can
-%% get current step name using erlang:fun_info/2
+%% Boot sequence steps. These are exported for better diagnostics, so we can
+%% get current step name using `erlang:fun_info/2`.
 -export([initialize_backend/1,
          acquire_startup_lock/1,
          find_best_node_to_join/1,
          maybe_cluster/1,
-         register_in_backend/1,
+         register_with_backend/1,
          release_startup_lock/1]).
 
 -include("autocluster.hrl").
@@ -53,16 +55,16 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Scrapes backend for list of nodes to possibly cluster to, chooses
-%% the best one (if any at all) and tries to join to that node.
-%% Startup sequence is protected against races by backend locking
-%% mechanism (or by random delay for backend without lock support).
+%% Retrieves a list of registered nodes from the  backend, chooses
+%% the best one (if any at all) and tries to join that node.
+%% Startup sequence is protected against races during initial cluster formation via a locking
+%% mechanism (or by randomized startup delay for backends hat do not support locking).
 %% @end
 %%--------------------------------------------------------------------
 -spec boot_step_discover_and_join() -> ok.
 boot_step_discover_and_join() ->
     ensure_logging_configured(),
-    autocluster_log:info("Running discover/join stage"),
+    autocluster_log:info("Running discover/join step"),
     start_dependee_applications(),
     Steps = [fun autocluster:initialize_backend/1,
              fun autocluster:acquire_startup_lock/1,
@@ -74,19 +76,19 @@ boot_step_discover_and_join() ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% We are ready to serve client requests, so it's a good time to
-%% register ourselves in the backend.
+%% At this point we are ready to serve client requests, so it's a good time to
+%% register ourselves with the backend.
 %%
-%% XXX What is proper behaviour when we failed to join to the cluster,
-%% but failure mode is `ignore`? Currently it tries to register this
+%% TODO: how should it work when we failed to join to the cluster
+%% but the failure mode is `ignore`? Currently it tries to register this
 %% node even in a case of an error, but maybe we should skip
 %% registration step instead?
 %%
 %% @end
 %%--------------------------------------------------------------------
 boot_step_register() ->
-    autocluster_log:info("Running register stage"),
-    run_steps([fun autocluster:register_in_backend/1]).
+    autocluster_log:info("Running registeration step"),
+    run_steps([fun autocluster:register_with_backend/1]).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -94,13 +96,14 @@ boot_step_register() ->
 %% @end
 %%--------------------------------------------------------------------
 boot_step_release_lock() ->
-    autocluster_log:info("Running unlock stage"),
+    autocluster_log:info("Running lock release step"),
     run_steps([fun autocluster:release_startup_lock/1]).
 
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
 %% Run initializations steps in order.
+%%
 %% - When step succeeds, it returns updated state that is passed to
 %%   subsequent steps.
 %% - When step fails, error is logged and processing stops. Depending
@@ -111,7 +114,7 @@ boot_step_release_lock() ->
 %%
 %% Initial and final states are implicit and managed by
 %% set_run_steps_state/1. This way we can split startup sequence into
-%% different stages that share some common state.
+%% different steps that share some common state.
 %% @end
 %%--------------------------------------------------------------------
 -spec run_steps([StepFun]) -> ok when
@@ -296,8 +299,8 @@ maybe_cluster(#startup_state{best_node_to_join = DNode} = State) ->
 %% require some health checker/TTL updater, it also starts those processes.
 %% @end
 %%--------------------------------------------------------------------
--spec register_in_backend(#startup_state{}) -> {ok, #startup_state{}} | {error, iolist()}.
-register_in_backend(State) ->
+-spec register_with_backend(#startup_state{}) -> {ok, #startup_state{}} | {error, iolist()}.
+register_with_backend(State) ->
     case backend_register(State) of
         ok ->
             {ok, State};
