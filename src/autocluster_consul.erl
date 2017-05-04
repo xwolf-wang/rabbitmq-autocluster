@@ -62,7 +62,7 @@ lock(Who) ->
             EndTime = Now + autocluster_config:get(lock_wait_time),
             lock(SessionId, Now, EndTime);
         {error, Reason} ->
-           lists:flatten(io_lib:format("Error while creating a session, reason: ~w", [Reason]))
+           lists:flatten(io_lib:format("Error while creating a session, reason: ~s", [Reason]))
     end.
 
 
@@ -78,7 +78,7 @@ unlock(SessionId) ->
         {ok, true} ->
             ok;
         {ok, false} ->
-            {error, lists:flatten(io_lib:format("Error while releasing the lock, session ~w may have been invalidated", [SessionId]))};
+            {error, lists:flatten(io_lib:format("Error while releasing the lock, session ~s may have been invalidated", [SessionId]))};
         {error, _} = Err ->
             Err
     end.
@@ -135,13 +135,13 @@ lock(SessionId, _, EndTime) ->
                         ok ->
                             lock(SessionId, time_compat:erlang_system_time(seconds), EndTime);
                         {error, Reason} ->
-                            {error, lists:flatten(io_lib:format("Error waiting for lock release, reason: ~w", [Reason]))}
+                            {error, lists:flatten(io_lib:format("Error waiting for lock release, reason: ~s",[Reason]))}
                     end;
                 {error, Reason} ->
-                    {error, lists:flatten(io_lib:format("Error obtaining lock status, reason: ~w", [Reason]))}
+                    {error, lists:flatten(io_lib:format("Error obtaining lock status, reason: ~s", [Reason]))}
             end;
         {error, Reason} ->
-            {error, lists:flatten(io_lib:format("Error while acquiring lock, reason: ~w", [Reason]))}
+            {error, lists:flatten(io_lib:format("Error while acquiring lock, reason: ~s", [Reason]))}
     end.
 
 
