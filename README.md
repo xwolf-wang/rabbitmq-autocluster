@@ -593,7 +593,8 @@ Development environment
 Work in Progress
 
 #### Make Commands
-- ``test``
+
+- ``tests``
 - ``run-broker``
 - ``shell``
 - ``dist``
