@@ -587,7 +587,7 @@ unregister_test_() ->
             ?assertEqual("http", Scheme),
             ?assertEqual("localhost", Host),
             ?assertEqual(8500, Port),
-            ?assertEqual([v1, agent, service, deregister, "service:rabbitmq"], Path),
+            ?assertEqual([v1, agent, service, deregister, "rabbitmq"], Path),
             ?assertEqual([], Args),
             {ok, []}
           end),
@@ -600,7 +600,7 @@ unregister_test_() ->
             ?assertEqual("https", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8501, Port),
-            ?assertEqual([v1, agent, service, deregister,"service:rabbit:10.0.0.1"], Path),
+            ?assertEqual([v1, agent, service, deregister,"rabbit:10.0.0.1"], Path),
             ?assertEqual([], Args),
             {ok, []}
           end),
@@ -619,7 +619,7 @@ unregister_test_() ->
             ?assertEqual("http", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8500, Port),
-            ?assertEqual([v1, agent, service, deregister,"service:rabbitmq"], Path),
+            ?assertEqual([v1, agent, service, deregister,"rabbitmq"], Path),
             ?assertEqual([{token, "token-value"}], Args),
             {ok, []}
           end),

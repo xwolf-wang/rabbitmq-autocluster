@@ -159,7 +159,7 @@ wait_nodelist(N) ->
 %%--------------------------------------------------------------------
 -spec unregister() -> ok | {error, Reason :: string()}.
 unregister() ->
-  Service = string:join(["service", service_id()], ":"),
+  Service = service_id(),
   case autocluster_httpc:get(autocluster_config:get(consul_scheme),
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
