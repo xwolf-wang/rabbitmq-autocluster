@@ -33,12 +33,12 @@ extract_node_list_hostname_short_test() ->
   autocluster_testing:reset(),
   os:putenv("K8S_ADDRESS_TYPE", "hostname"),
   {ok, Response} =
-    json_decode(rabbit_data_coercion:to_binary(
+    rabbit_misc:json_decode(
       [<<"{\"name\": \"mysvc\",\n\"subsets\": [\n{\n\"addresses\": ">>,
         <<"[{\"ip\": \"10.10.1.1\", \"hostname\": \"rabbitmq-1\"}, ">>,
         <<"{\"ip\": \"10.10.2.2\", \"hostname\": \"rabbitmq-2\"}],\n">>,
         <<"\"ports\": [{\"name\": \"a\", \"port\": 8675}, {\"name\": ">>,
-        <<"\"b\", \"port\": 309}]\n}]}">>])),
+        <<"\"b\", \"port\": 309}]\n}]}">>]),
   Expectation = [<<"rabbitmq-1">>, <<"rabbitmq-2">>],
   ?assertEqual(Expectation, autocluster_k8s:extract_node_list(Response)).
 
