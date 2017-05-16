@@ -1,0 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: test-rabbitmq
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+    type: LoadBalancer  
+spec:
+  ports:
+  - port: 15672
+    protocol: TCP
+    targetPort: 15672
+    protocol: TCP
+  selector:
+    app: rabbitmq    
