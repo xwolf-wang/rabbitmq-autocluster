@@ -57,7 +57,6 @@ unregister() -> ok.
 %%
 make_request() ->
     {ok, Token} = file:read_file(autocluster_config:get(k8s_token_path)),
-    autocluster_log:info("Token ~s - Path ~s", [Token,autocluster_config:get(k8s_cert_path)]),
     Token1 = binary:replace(Token, <<"\n">>, <<>>),
     autocluster_httpc:get(
       autocluster_config:get(k8s_scheme),
