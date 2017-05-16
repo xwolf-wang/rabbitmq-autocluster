@@ -51,6 +51,16 @@ extract_node_list_real_test() ->
 		<<"10.1.29.8">>],
   ?assertEqual(Expectation, autocluster_k8s:extract_node_list(Response)).
 
+extract_node_list_with_not_ready_addresses_test() ->
+    autocluster_testing:reset(),
+    {ok, Response}  =
+        rabbit_misc:json_decode(
+            [<<"{\"kind\":\"Endpoints\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"rabbitmq\",\"namespace\":\"test-rabbitmq\",\"selfLink\":\"\/api\/v1\/namespaces\/test-rabbitmq\/endpoints\/rabbitmq\",\"uid\":\"0bcb4be6-3a17-11e7-9fac-080027cbdcae\",\"resourceVersion\":\"108776\",\"creationTimestamp\":\"2017-05-16T09:07:11Z\",\"labels\":{\"app\":\"rabbitmq\",\"type\":\"LoadBalancer\"}},\"subsets\":[{\"notReadyAddresses\":[{\"ip\":\"172.17.0.2\",\"hostname\":\"rabbitmq-0\",\"nodeName\":\"minikube\",\"targetRef\":{\"kind\":\"Pod\",\"namespace\":\"test-rabbitmq\",\"name\":\"rabbitmq-0\",\"uid\":\"3523b6ad-3a17-11e7-9fac-080027cbdcae\",\"resourceVersion\":\"108775\"}}],\"ports\":[{\"port\":15672,\"protocol\":\"TCP\"}]}]}">>]),
+    Expectation = [],
+    ?assertEqual(Expectation, autocluster_k8s:extract_node_list(Response)).
+
+
+
 node_name_empty_test() ->
   autocluster_testing:reset(),
   os:putenv("RABBITMQ_USE_LONGNAME", "true"),
