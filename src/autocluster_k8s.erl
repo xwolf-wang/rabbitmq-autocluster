@@ -10,7 +10,7 @@
 %% autocluster_backend methods
 -export([nodelist/0,
   register/0,
-  unregister/0]).
+  unregister/0, make_request/0]).
 
 %% Export all for unit tests
 -ifdef(TEST).
@@ -57,6 +57,7 @@ unregister() -> ok.
 %%
 make_request() ->
     {ok, Token} = file:read_file(autocluster_config:get(k8s_token_path)),
+    autocluster_log:info("Token ~s - Path ~s", [Token,autocluster_config:get(k8s_cert_path)]),
     Token1 = binary:replace(Token, <<"\n">>, <<>>),
     autocluster_httpc:get(
       autocluster_config:get(k8s_scheme),
@@ -67,13 +68,25 @@ make_request() ->
       [{"Authorization", ["Bearer ", Token1]}],
       [{ssl, [{cacertfile, autocluster_config:get(k8s_cert_path)}]}]).
 
-%% @spec node_name(k8s_endpoint) -> list()
+%% @spec node_name(k8s_endpoint) -> list()  
 %% @doc Return a full rabbit node name, appending hostname suffix
 %% @end
 %%
 node_name(Address) ->
   autocluster_util:node_name(
     autocluster_util:as_string(Address) ++ autocluster_config:get(k8s_hostname_suffix)).
+
+
+%% @spec maybe_ready_address(k8s_subsets()) -> list()
+%% @doc Return a list of ready nodes
+%% SubSet can contain also "notReadyAddresses"  
+%% @end
+%%
+maybe_ready_address(Subset) ->
+  case proplists:get_value(<<"addresses">>, Subset) of 
+      undefined -> autocluster_log:info("No nodes reay yet!"), []; 
+      Address -> Address  
+  end.
 
 %% @spec extract_node_list(k8s_endpoints()) -> list()
 %% @doc Return a list of nodes
@@ -82,7 +95,7 @@ node_name(Address) ->
 %%
 extract_node_list({struct, Response}) ->
     IpLists = [[proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), Address)
-		|| {struct, Address} <- proplists:get_value(<<"addresses">>, Subset)]
+		|| {struct, Address} <- maybe_ready_address(Subset)]
 	       || {struct, Subset} <- proplists:get_value(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
