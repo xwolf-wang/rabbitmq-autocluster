@@ -10,7 +10,7 @@
 %% autocluster_backend methods
 -export([nodelist/0,
   register/0,
-  unregister/0, make_request/0]).
+  unregister/0]).
 
 %% Export all for unit tests
 -ifdef(TEST).
@@ -83,7 +83,7 @@ node_name(Address) ->
 %%
 maybe_ready_address(Subset) ->
   case proplists:get_value(<<"addresses">>, Subset) of 
-      undefined -> autocluster_log:info("No nodes reay yet!"), []; 
+      undefined -> autocluster_log:info("No nodes ready yet!"), [];
       Address -> Address  
   end.
 

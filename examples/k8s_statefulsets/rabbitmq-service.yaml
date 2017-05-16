@@ -7,10 +7,12 @@ metadata:
     app: rabbitmq
     type: LoadBalancer  
 spec:
+  type: NodePort
   ports:
   - port: 15672
     protocol: TCP
     targetPort: 15672
     protocol: TCP
+    nodePort: 31672
   selector:
-    app: rabbitmq    
+    app: rabbitmq
