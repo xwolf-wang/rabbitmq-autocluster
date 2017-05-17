@@ -85,9 +85,10 @@ maybe_ready_address(Subset) ->
     case proplists:get_value(<<"notReadyAddresses">>, Subset) of
       undefined -> ok;
       NotReadyAddresses ->
-            autocluster_log:info("k8s endpoint listing returned nodes not yet ready: ~p",
-                     [[proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), X)
-                       || {struct, X} <- NotReadyAddresses]])
+            Formatted = string:join([binary_to_list(get_address(X))
+                                     || {struct, X} <- NotReadyAddresses], ", "),
+            autocluster_log:info("k8s endpoint listing returned nodes not yet ready: ~s",
+                                 [Formatted])
     end,
     case proplists:get_value(<<"addresses">>, Subset) of
       undefined -> [];
@@ -100,7 +101,7 @@ maybe_ready_address(Subset) ->
 %% @end
 %%
 extract_node_list({struct, Response}) ->
-    IpLists = [[proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), Address)
+    IpLists = [[get_address(Address)
 		|| {struct, Address} <- maybe_ready_address(Subset)]
 	       || {struct, Subset} <- proplists:get_value(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
@@ -116,3 +117,6 @@ base_path() ->
     NameSpace1 = binary:replace(NameSpace, <<"\n">>, <<>>),
     [api, v1, namespaces, NameSpace1, endpoints,
      autocluster_config:get(k8s_service_name)].
+
+get_address(Address) ->
+    proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), Address).
