@@ -5,7 +5,7 @@ metadata:
   namespace: test-rabbitmq
 spec:
   serviceName: rabbitmq
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -16,7 +16,12 @@ spec:
       - name: rabbitmq-autocluster
         image: rabbitmq-autocluster
         ports:
-          - containerPort: 15672
+          - name: http
+            protocol: TCP
+            containerPort: 15672
+          - name: amqp
+            protocol: TCP
+            containerPort: 5672
         livenessProbe:
           exec:
             command: ["rabbitmqctl", "status"]
