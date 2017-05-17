@@ -1,32 +1,35 @@
-RabbitMQ-Autoclsuter on K8s  [StatefulSet  Controller](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)   
+RabbitMQ-Autocluster on K8s  [StatefulSet  Controller](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)   
 
-1.Install [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+1. Install [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
-2.Install [`Minikube`](https://kubernetes.io/docs/tasks/tools/install-minikube/)
 
-3.Start `minikube` virtual machine:
+2. Install [`minikube`](https://kubernetes.io/docs/tasks/tools/install-minikube/)
+
+
+3. Start `minikube` virtual machine:
 ```
 $ minikube start --cpus=2 --memory=2040 --vm-driver=virtualbox
 ```
+
 4. Create a namespace only for RabbitMQ test:
 ```
 $ kubectl create namespace test-rabbitmq
 ```
-6. Build a [Docker image](https://github.com/rabbitmq/rabbitmq-autocluster/blob/master/Dockerfile)
+5. Build the [Docker image](https://github.com/rabbitmq/rabbitmq-autocluster/blob/master/Dockerfile)
 ```
-$ git clone https://github.com/rabbitmq/rabbitmq-autocluster.git rabbitmq-autocluster
+$ git clone https://github.com/rabbitmq/rabbitmq-autocluster.git .
 make dist
 eval $(minikube docker-env)
 docker build  . -t rabbitmq-autocluster
 ```
 Wait until the image is created..
 
-7.  Deploy the service `YAML` file:
+6. Deploy the service `YAML` file:
 
 ```
 $ kubectl create -f examples/k8s_statefulsets/rabbitmq-service.yaml
 ```
-7.  Deploy the RabbitMQ StatefulSet `YAML` file:
+7. Deploy the RabbitMQ StatefulSet `YAML` file:
 
 ```
 $ kubectl create -f examples/k8s_statefulsets/rabbitmq.yaml
@@ -52,7 +55,7 @@ Cluster status of node 'rabbit@172.17.0.2'
           {'rabbit@172.17.0.2',[]}]}]
 ```
 
-9. Get your Minikube ip:
+9. Get your `minikube` ip:
 ```
 $ minikube ip
 192.168.99.104
