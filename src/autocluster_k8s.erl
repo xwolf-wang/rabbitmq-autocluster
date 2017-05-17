@@ -82,10 +82,17 @@ node_name(Address) ->
 %% @end
 %%
 maybe_ready_address(Subset) ->
-  case proplists:get_value(<<"addresses">>, Subset) of 
-      undefined -> autocluster_log:info("No nodes ready yet!"), [];
-      Address -> Address  
-  end.
+    case proplists:get_value(<<"notReadyAddresses">>, Subset) of
+	undefined -> ok;
+	NotReadyAddresses ->
+	    autocluster_log:info("k8s endpoint listing returned nodes not yet ready: ~p",
+				 [[proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), X)
+				   || {struct, X} <- NotReadyAddresses]])
+    end,
+    case proplists:get_value(<<"addresses">>, Subset) of
+	undefined -> [];
+	Address -> Address
+    end.
 
 %% @spec extract_node_list(k8s_endpoints()) -> list()
 %% @doc Return a list of nodes
