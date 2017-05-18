@@ -256,32 +256,31 @@ The following configuration example enables the autoscaling based cluster discov
 
 ```erlang
 [
- {rabbit, [
-           {log_levels, [{autocluster, info}, {connection, info}]}
-                        ]},
-                         {autocluster, [
-                                        {backend, aws},
-                                                  {aws_autoscaling, true},
-                                                  {aws_ec2_region, "us-west-2"}
-                                                  ]}
-                                                   ].
+  {autocluster, [
+    {autocluster_log_level, debug},
+    {backend, aws},
+    {aws_autoscaling, true},
+    {aws_ec2_region, "us-west-2"}
+  ]}
+].
 ```
 
 For non-autoscaling group based clusters, the following configuration demonstrates how to limit EC2 instances in the cluster to nodes with the tags ``region=us-west-2`` and ``service=rabbitmq``. It also specifies the AWS access key and AWS secret key.
 
 ```erlang
 [
- {rabbit, [
-           {log_levels, [{autocluster, info}, {connection, info}]}
-                        ]},
-                         {autocluster, [
-                                        {backend, aws},
-                                                  {aws_ec2_tags, [{"region", "us-west-2"}, {"service", "rabbitmq"}]},
-                                                  {aws_ec2_region, "us-east-1"},
-                                                  {aws_access_key, "AKIDEXAMPLE"},
-                                                  {aws_secret_key, "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-                                                  ]}
-                                                   ].
+  {autocluster, [
+    {autocluster_log_level, debug},
+    {backend, aws},
+    {aws_ec2_tags, [
+      {"region", "us-west-2"},
+      {"service", "rabbitmq"}
+    ]},
+    {aws_ec2_region, "us-east-1"},
+    {aws_access_key, "AKIDEXAMPLE"},
+    {aws_secret_key, "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+  ]}
+].
 ```
 
 When using environment variables, the tags must be provided in JSON format:
