@@ -112,7 +112,7 @@ The following settings are available for all service discovery backends:
   <dt>Failure Mode</dt>
   <dd>What behavior to use when the node fails to cluster with an existing RabbitMQ cluster or during initialization of the autocluster plugin. The two valid options are <code>ignore</code> and <code>stop</code>.</dd>
   <dt>Log Level</dt>
-  <dd>Prior to <em>v0.6</em>, log level can be set using RabbitMQ's <code>log_levels</code> configuration - as described at the end of this page. Starting with <em>v0.6</em> you can set the log level via the environment variable <code>AUTOCLUSTER_LOG_LEVEL</code> or the <code>autocluster_log_level</code> setting of the <code>autocluster</code> application.</dd>
+  <dd>You can set the log level via the environment variable <code>AUTOCLUSTER_LOG_LEVEL</code> or the <code>autocluster.autocluster_log_level</code> key (see below).</dd>
   <dt>Longname (FQDN) Support</dt>
   <dd>This is a RabbitMQ  environment variable setting that is used by the autocluster plugin as well. When set to <code>true</code> this will cause RabbitMQ <b>and the</b> autocluster plugin to use fully qualified names to identify nodes. For more information about the <code>RABBITMQ_USE_LONGNAME</code> environment variable, see the <a href="https://www.rabbitmq.com/configure.html#define-environment-variables">RabbitMQ documentation</a></dd>
   <dt>Node Name</dt>
@@ -150,20 +150,26 @@ The following chart details each general setting, with the environment variable 
 | Cleanup Interval  | ``CLEANUP_INTERVAL``      | ``cleanup_interval``      | ``integer`` | ``60``               |
 | Cleanup Warn Only | ``CLEANUP_WARN_ONLY``     | ``cleanup_warn_only``     | ``bool``    | ``true``             |
 
-#### Logging Configuration prior to *v0.6*
+#### Logging Configuration
 
-This is the only way to enable debug logging for the plugin for versions prior to v0.6. Since v0.6 it's no longer effective, you should use ``AUTOCLUSTER_LOG_LEVEL`` environment variable or ``autocluster_log_level`` setting.
+To configure logging level used by this plugin, use the
+``AUTOCLUSTER_LOG_LEVEL`` environment variable or
+`autocluster.autocluster_log_level` setting.
 
-autocluster will register itself as a configured logger with RabbitMQ if no log configuration for it exists. To configure logging for the plugin, you add it to the ``rabbit`` ``log_levels`` configuration like so:
+Here's a very minimalistic example that enables debug logging:
 
 ```erlang
 
-[{rabbit, [
-           {log_levels, [{autocluster, debug}, {connection, info}]}
-                        ]}].
+[
+  {autocluster, [
+    {autocluster_log_level, debug}
+  ]}
+].
 ```
 
-Valid log levels are ``debug``, ``info``, ``warning``, and ``error``. For more information on configuring RabbitMQ logging, reference the ``log_levels`` key in the [RabbitMQ documentation](https://www.rabbitmq.com/configure.html).
+Valid log levels are `debug`, `info`, `warning`, and
+`error`. For more information on RabbitMQ configuration please refer to [RabbitMQ documentation](https://www.rabbitmq.com/configure.html).
+
 
 ### AWS Configuration
 
