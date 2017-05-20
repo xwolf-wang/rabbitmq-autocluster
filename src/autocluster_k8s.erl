@@ -9,8 +9,10 @@
 
 %% autocluster_backend methods
 -export([nodelist/0,
-  register/0,
-  unregister/0]).
+         lock/1,
+         unlock/1,
+         register/0,
+         unregister/0]).
 
 %% Export all for unit tests
 -ifdef(TEST).
@@ -36,6 +38,14 @@ nodelist() ->
     end.
 
 
+-spec lock(string()) -> not_supported.
+lock(_) ->
+    not_supported.
+
+-spec unlock(term()) -> ok.
+unlock(_) ->
+    ok.
+
 %% @spec register() -> ok|{error, Reason :: string()}
 %% @doc Stub, since this module does not update DNS
 %% @end
@@ -50,11 +60,10 @@ register() -> ok.
 unregister() -> ok.
 
 
-%% @spec make_request() -> Result
-%% @where Result = {ok, mixed}|{error, Reason::string()}
 %% @doc Perform a HTTP GET request to K8s
 %% @end
 %%
+-spec make_request() -> {ok, term()} | {error, term()}.
 make_request() ->
     {ok, Token} = file:read_file(autocluster_config:get(k8s_token_path)),
     Token1 = binary:replace(Token, <<"\n">>, <<>>),
@@ -64,7 +73,7 @@ make_request() ->
       autocluster_config:get(k8s_port),
       base_path(),
       [],
-      [{"Authorization", ["Bearer ", Token1]}],
+      [{"Authorization", "Bearer " ++ binary_to_list(Token1)}],
       [{ssl, [{cacertfile, autocluster_config:get(k8s_cert_path)}]}]).
 
 %% @spec node_name(k8s_endpoint) -> list()  
@@ -95,11 +104,11 @@ maybe_ready_address(Subset) ->
       Address -> Address
     end.
 
-%% @spec extract_node_list(k8s_endpoints()) -> list()
 %% @doc Return a list of nodes
 %%    see http://kubernetes.io/docs/api-reference/v1/definitions/#_v1_endpoints
 %% @end
 %%
+-spec extract_node_list({struct, term()}) -> [binary()].
 extract_node_list({struct, Response}) ->
     IpLists = [[get_address(Address)
 		|| {struct, Address} <- maybe_ready_address(Subset)]
@@ -107,10 +116,10 @@ extract_node_list({struct, Response}) ->
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
 
-%% @spec base_path() -> list()
 %% @doc Return a list of path segments that are the base path for k8s key actions
 %% @end
 %%
+-spec base_path() -> [autocluster_httpc:path_component()].
 base_path() ->
     {ok, NameSpace} = file:read_file(
 			autocluster_config:get(k8s_namespace_path)),

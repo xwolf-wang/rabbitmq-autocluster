@@ -9,7 +9,7 @@ endef
 
 DEPS = rabbit_common rabbitmq_aws
 
-TEST_DEPS += rabbit rabbitmq_ct_helpers meck
+TEST_DEPS += rabbit erlsh rabbitmq_ct_helpers meck
 IGNORE_DEPS += rabbitmq_java_client
 
 DEP_PLUGINS = rabbit_common/mk/rabbitmq-plugin.mk
