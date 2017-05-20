@@ -30,7 +30,7 @@ nodelist() ->
     case make_request() of
 	{ok, Response} ->
 	    Addresses = extract_node_list(Response),
-	    {ok, lists:map(fun autocluster_util:node_name/1, Addresses)};
+	    {ok, lists:map(fun node_name/1, Addresses)};
 	{error, Reason} ->
 	    autocluster_log:info(
 	      "Failed to get nodes from k8s - ~s", [Reason]),
@@ -76,6 +76,33 @@ make_request() ->
       [{"Authorization", "Bearer " ++ binary_to_list(Token1)}],
       [{ssl, [{cacertfile, autocluster_config:get(k8s_cert_path)}]}]).
 
+%% @spec node_name(k8s_endpoint) -> list()  
+%% @doc Return a full rabbit node name, appending hostname suffix
+%% @end
+%%
+node_name(Address) ->
+  autocluster_util:node_name(
+    autocluster_util:as_string(Address) ++ autocluster_config:get(k8s_hostname_suffix)).
+
+
+%% @spec maybe_ready_address(k8s_subsets()) -> list()
+%% @doc Return a list of ready nodes
+%% SubSet can contain also "notReadyAddresses"  
+%% @end
+%%
+maybe_ready_address(Subset) ->
+    case proplists:get_value(<<"notReadyAddresses">>, Subset) of
+      undefined -> ok;
+      NotReadyAddresses ->
+            Formatted = string:join([binary_to_list(get_address(X))
+                                     || {struct, X} <- NotReadyAddresses], ", "),
+            autocluster_log:info("k8s endpoint listing returned nodes not yet ready: ~s",
+                                 [Formatted])
+    end,
+    case proplists:get_value(<<"addresses">>, Subset) of
+      undefined -> [];
+      Address -> Address
+    end.
 
 %% @doc Return a list of nodes
 %%    see http://kubernetes.io/docs/api-reference/v1/definitions/#_v1_endpoints
@@ -83,8 +110,8 @@ make_request() ->
 %%
 -spec extract_node_list({struct, term()}) -> [binary()].
 extract_node_list({struct, Response}) ->
-    IpLists = [[proplists:get_value(<<"ip">>, Address)
-		|| {struct, Address} <- proplists:get_value(<<"addresses">>, Subset)]
+    IpLists = [[get_address(Address)
+		|| {struct, Address} <- maybe_ready_address(Subset)]
 	       || {struct, Subset} <- proplists:get_value(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
@@ -99,3 +126,6 @@ base_path() ->
     NameSpace1 = binary:replace(NameSpace, <<"\n">>, <<>>),
     [api, v1, namespaces, NameSpace1, endpoints,
      autocluster_config:get(k8s_service_name)].
+
+get_address(Address) ->
+    proplists:get_value(list_to_binary(autocluster_config:get(k8s_address_type)), Address).
