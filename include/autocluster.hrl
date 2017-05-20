@@ -81,8 +81,8 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Detailed node information used for choosing the preferred cluster
-%% to join to.
+%% Extended node information used for choosing the preferred cluster member
+%% to join.
 %% @end
 %%--------------------------------------------------------------------
 -record(candidate_seed_node, {name :: node()

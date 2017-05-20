@@ -89,12 +89,12 @@ unregister() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% @doc
-%% Tries to acquire lock several times - until the lock is finally
-%% granted or until too much time has passed.
+%% Tries to acquire the lock. Will retry until the lock is finally
+%% granted or time is up.
 %% @end
 -spec lock(string(), pos_integer(), pos_integer()) -> ok | {error, string()}.
 lock(_, Now, EndTime) when EndTime < Now ->
-    {error, "Acquiring lock taking too long, bailing out"};
+    {error, "Acquiring the lock taking too long, bailing out"};
 lock(UniqueId, _, EndTime) ->
     case try_insert_lock_key(UniqueId) of
         true ->
@@ -104,7 +104,7 @@ lock(UniqueId, _, EndTime) ->
             wait_for_lock_release(),
             lock(UniqueId, time_compat:erlang_system_time(seconds), EndTime);
         {error, Reason} ->
-            {error, lists:flatten(io_lib:format("Error while acquiring lock, reason: ~w", [Reason]))}
+            {error, lists:flatten(io_lib:format("Error while acquiring the lock, reason: ~w", [Reason]))}
     end.
 
 
@@ -117,7 +117,7 @@ set_etcd_node_key() ->
     {ok, _} ->
        autocluster_log:debug("Updated node registration with etcd");
     {error, Error}   ->
-       autocluster_log:debug("Failed to update node registration with etcd - ~s", [Error])
+       autocluster_log:debug("Failed to update node registration with etcd: ~s", [Error])
   end,
   ok.
 
@@ -188,8 +188,8 @@ get_node_from_key(<<"/", V/binary>>) -> get_node_from_key(V);
 get_node_from_key(V) ->
   %% nodes path is /v2/keys/<etcd-prefix>/<cluster-name>/nodes
   %% etcd returns node keys as /<etcd-prefix>/<cluster-name>/nodes/<nodename>
-  %% We are taking path components from "<etcd-prefix>" up to "nodes",
-  %% and discarding that amount of characters from the key returned by etcd.
+  %% We are mapping path components from "<etcd-prefix>" up to "nodes",
+  %% and discarding the same number of characters from the key returned by etcd.
   Path = string:concat(autocluster_httpc:build_path(lists:sublist(nodes_path(), 3, 3)), "/"),
   autocluster_util:node_name(string:substr(binary_to_list(V), length(Path))).
 
@@ -200,7 +200,7 @@ get_node_from_key(V) ->
 generate_unique_string() ->
     [ $a - 1 + rand_compat:uniform(26) || _ <- lists:seq(1, 32) ].
 
-%% @doc Tries to create lock in etcd. This can either succeed, fail
+%% @doc Tries to acquire a lock in etcd. This can either succeed, fail
 %% because somebody else is holding the lock, or completely file due
 %% to some I/O error.
 %% @end
@@ -210,7 +210,8 @@ try_insert_lock_key(UniqueId) ->
     case set_etcd_lock_key(UniqueId, Ttl) of
         {ok, _} ->
             true;
-        {error, "412"} -> %% Precondition failed
+        %% Precondition failed
+        {error, "412"} ->
             false;
         {error, _} = Err ->
             Err
