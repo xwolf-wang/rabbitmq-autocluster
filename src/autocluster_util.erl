@@ -277,10 +277,10 @@ parse_port(Value) -> as_integer(Value).
 %% join to.
 %% @end
 %%--------------------------------------------------------------------
--spec augment_nodelist([node()]) -> [#augmented_node{}].
+-spec augment_nodelist([node()]) -> [#candidate_seed_node{}].
 augment_nodelist(Nodes) ->
     {ResL, _BadNodeNames} = rpc:multicall(Nodes, autocluster_util, augmented_node_info, [], 5000),
-    [ A || A = #augmented_node{} <- ResL ].
+    [ A || A = #candidate_seed_node{} <- ResL ].
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -288,11 +288,11 @@ augment_nodelist(Nodes) ->
 %% node. Only called using RPC from augment_nodelist/1.
 %% @end
 %%--------------------------------------------------------------------
--spec augmented_node_info() -> #augmented_node{}.
+-spec augmented_node_info() -> #candidate_seed_node{}.
 augmented_node_info() ->
     Running = rabbit_mnesia:cluster_nodes(running),
     Partitioned = rabbit_node_monitor:partitions(),
-    #augmented_node{
+    #candidate_seed_node{
        name = node(),
        uptime = element(1, erlang:statistics(wall_clock)),
        alive = true,

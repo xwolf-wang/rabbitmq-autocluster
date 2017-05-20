@@ -134,7 +134,7 @@ find_best_node_to_join_updates_state_test_() ->
               meck:expect(autocluster_etcd, nodelist, fun () -> {ok, ['some-other-node@localhost']} end),
               meck:expect(autocluster_util, augment_nodelist,
                           fun([Node]) ->
-                                  [#augmented_node{
+                                  [#candidate_seed_node{
                                      name = Node,
                                      uptime = 0,
                                      alive = true,
@@ -249,7 +249,7 @@ choose_best_node_empty_list_test() ->
     ?assertEqual(undefined, autocluster:choose_best_node([])).
 
 choose_best_node_only_self_test() ->
-    ?assertEqual(undefined, autocluster:choose_best_node([#augmented_node{name = node()}])).
+    ?assertEqual(undefined, autocluster:choose_best_node([#candidate_seed_node{name = node()}])).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

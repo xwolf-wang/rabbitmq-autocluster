@@ -69,27 +69,27 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% State that is being passed around and updated by different
+%% State that is passed around and updated by
 %% initialization steps.
 %% @end
 %%--------------------------------------------------------------------
 -record(startup_state, {backend_name :: atom()
-                       ,backend_module :: module()
-                       ,best_node_to_join :: undefined | node()
-                       ,startup_lock_data = undefined
+                       , backend_module :: module()
+                       , best_node_to_join :: undefined | node()
+                       , startup_lock_data = undefined
                        }).
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Detailed node information neccessary for choosing the best cluster
+%% Detailed node information used for choosing the preferred cluster
 %% to join to.
 %% @end
 %%--------------------------------------------------------------------
--record(augmented_node, {name :: node()
-                        ,uptime :: non_neg_integer()
-                        ,alive :: boolean()
-                        ,clustered_with :: [node()]
-                        ,alive_cluster_nodes :: [node()]
-                        ,partitioned_cluster_nodes :: [node()]
-                        ,other_cluster_nodes :: [node()]
+-record(candidate_seed_node, {name :: node()
+                        , uptime :: non_neg_integer()
+                        , alive :: boolean()
+                        , clustered_with :: [node()]
+                        , alive_cluster_nodes :: [node()]
+                        , partitioned_cluster_nodes :: [node()]
+                        , other_cluster_nodes :: [node()]
                         }).
