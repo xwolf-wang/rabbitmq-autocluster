@@ -104,7 +104,7 @@ lock(UniqueId, _, EndTime) ->
             wait_for_lock_release(),
             lock(UniqueId, time_compat:erlang_system_time(seconds), EndTime);
         {error, Reason} ->
-            {error, lists:flatten(io_lib:format("Error while acquiring the lock, reason: ~w", [Reason]))}
+            {error, lists:flatten(io_lib:format("Error while acquiring the lock, reason: ~p", [Reason]))}
     end.
 
 
