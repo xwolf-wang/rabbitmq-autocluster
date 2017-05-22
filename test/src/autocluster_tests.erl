@@ -287,7 +287,7 @@ register_in_backend_backend_empty_test_() ->
     [ {eunit_title("Register in backend with empty backend", []),
         fun () ->
             autocluster_testing:reset(),
-            {error, unconfigured} = autocluster:register_in_backend(
+            {error, unconfigured} = autocluster:register_with_backend(
                 autocluster:new_startup_state())
         end} ].
 
