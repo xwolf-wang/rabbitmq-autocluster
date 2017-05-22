@@ -14,6 +14,9 @@
          register/0,
          unregister/0]).
 
+%% Useful for debugging
+-export([service_address/0]).
+
 %% Ignore this (is used so we can stub with meck in tests)
 -export([build_registration_body/0]).
 
