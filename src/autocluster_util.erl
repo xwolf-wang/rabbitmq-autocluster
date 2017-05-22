@@ -308,7 +308,7 @@ stringify_error({ok, _} = Res) ->
 stringify_error({error, Str}) when is_list(Str) ->
     {error, Str};
 stringify_error({error, Term}) ->
-    {error, lists:flatten(io_lib:format("~w", [Term]))}.
+    {error, lists:flatten(io_lib:format("~p", [Term]))}.
 
 
 %%--------------------------------------------------------------------
