@@ -279,8 +279,11 @@ parse_port(Value) -> as_integer(Value).
 %%--------------------------------------------------------------------
 -spec augment_nodelist([node()]) -> [#candidate_seed_node{}].
 augment_nodelist(Nodes) ->
-    {ResL, _BadNodeNames} = rpc:multicall(Nodes, autocluster_util, augmented_node_info, [], 5000),
-    [ A || A = #candidate_seed_node{} <- ResL ].
+    %% TODO: this should not be hardcoded
+    {Responses, UnreachableNodes} = rpc:multicall(Nodes, autocluster_util, augmented_node_info, [], 5000),
+    autocluster_log:debug("Fetching node details. Unreachable nodes (or nodes that responded with an error): ~p", [UnreachableNodes]),
+    autocluster_log:debug("Fetching node details. Responses: ~p", [Responses]),
+    [A || A = #candidate_seed_node{} <- Responses].
 
 %%--------------------------------------------------------------------
 %% @doc

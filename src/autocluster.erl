@@ -452,6 +452,7 @@ start_dependee_applications() ->
 %%--------------------------------------------------------------------
 -spec choose_best_node([#candidate_seed_node{}]) -> node() | undefined.
 choose_best_node([_|_] = NonEmptyNodeList) ->
+    autocluster_log:debug("Asked to choose preferred node from the list of: ~p", [NonEmptyNodeList]),
     Sorted = lists:sort(fun(#candidate_seed_node{name = A}, #candidate_seed_node{name = B}) ->
                                 A < B
                         end,
@@ -460,13 +461,17 @@ choose_best_node([_|_] = NonEmptyNodeList) ->
                                           (#candidate_seed_node{alive = false}) -> false;
                                           (_) -> true
                                       end, Sorted),
+    autocluster_log:debug("Filtered node list (does not include us and non-running/reachable nodes): ~p", [WithoutSelfAndDead]),
     case WithoutSelfAndDead of
         [BestNode|_] ->
             BestNode#candidate_seed_node.name;
         _ ->
             undefined
     end;
-choose_best_node(_) ->
+choose_best_node([]) ->
+    autocluster_log:warning("No nodes to choose the preferred from!");
+choose_best_node(Other) ->
+    autocluster_log:debug("choose_best_node invoked with an unexpected value: ~p", [Other]),
     undefined.
 
 %%--------------------------------------------------------------------
