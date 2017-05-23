@@ -469,7 +469,8 @@ choose_best_node([_|_] = NonEmptyNodeList) ->
             undefined
     end;
 choose_best_node([]) ->
-    autocluster_log:warning("No nodes to choose the preferred from!");
+    autocluster_log:warning("No nodes to choose the preferred from!"),
+    undefined;
 choose_best_node(Other) ->
     autocluster_log:debug("choose_best_node invoked with an unexpected value: ~p", [Other]),
     undefined.
