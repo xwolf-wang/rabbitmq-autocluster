@@ -194,19 +194,19 @@ maybe_cluster_handles_all_possible_join_cluster_result_test_() ->
                 end
         end} || {JoinResult, Expect} <- Cases]).
 
-register_in_backend_handles_success_test() ->
+register_with_backend_handles_success_test() ->
     autocluster_testing:with_mock(
       [autocluster_etcd],
       fun() ->
               State = #startup_state{backend_name = etcd,
                                      backend_module = autocluster_etcd},
               meck:expect(autocluster_etcd, register, fun () -> ok end),
-              {ok, State} = autocluster:register_in_backend(State),
+              {ok, State} = autocluster:register_with_backend(State),
               ?assert(meck:validate(autocluster_etcd))
       end),
     ok.
 
-register_in_backend_handles_failure_test() ->
+register_with_backend_handles_failure_test() ->
     autocluster_testing:with_mock(
       [autocluster_etcd],
       fun() ->
@@ -214,7 +214,7 @@ register_in_backend_handles_failure_test() ->
                                      backend_module = autocluster_etcd},
               meck:expect(autocluster_etcd, register,
                           fun () -> {error, "something going on"} end),
-              {error, _} = autocluster:register_in_backend(State),
+              {error, _} = autocluster:register_with_backend(State),
               ?assert(meck:validate(autocluster_etcd))
       end),
     ok.
@@ -283,11 +283,11 @@ release_startup_lock_backend_empty_test_() ->
         end} ].
 
 
-register_in_backend_backend_empty_test_() ->
+register_with_backend_backend_empty_test_() ->
     [ {eunit_title("Register in backend with empty backend", []),
         fun () ->
             autocluster_testing:reset(),
-            {error, unconfigured} = autocluster:register_in_backend(
+            {error, unconfigured} = autocluster:register_with_backend(
                 autocluster:new_startup_state())
         end} ].
 
