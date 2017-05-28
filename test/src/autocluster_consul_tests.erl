@@ -31,10 +31,13 @@ build_registration_body_test_() ->
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
        end},
       {"with ttl set", fun() ->
-        os:putenv("CONSUL_SVC_TTL", ""),
+        os:putenv("CONSUL_SVC_TTL", "269"),
         Expectation = [{'ID','rabbitmq'},
                        {'Name',rabbitmq},
-                       {'Port',5672}],
+                       {'Port',5672},
+                       {'Check',
+                        [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
+                         {'TTL','269s'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
       end},
       {"with deregister set", fun() ->
