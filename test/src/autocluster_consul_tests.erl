@@ -51,7 +51,7 @@ build_registration_body_test_() ->
               {'Deregister_critical_service_after','257s'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
       end},
-      {"with unset deregister and ttl set", fun() ->
+      {"with unset deregister and ttl", fun() ->
         os:putenv("CONSUL_DEREGISTER_AFTER", ""),
         os:putenv("CONSUL_SVC_TTL", ""),
         Expectation = [{'ID','rabbitmq'},
