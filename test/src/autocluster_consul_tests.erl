@@ -293,7 +293,7 @@ register_test_() ->
           ?assert(meck:validate(timer)),
           ?assert(meck:validate(autocluster_httpc))
         end},
-      {"with cluster",
+      {"with cluster name",
         fun() ->
           meck:expect(autocluster_httpc, post,
             fun(Scheme, Host, Port, Path, Args, Body) ->
