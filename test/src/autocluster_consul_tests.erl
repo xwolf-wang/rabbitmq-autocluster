@@ -39,7 +39,8 @@ build_registration_body_test_() ->
                        {'Port',5672},
                        {'Check',
                         [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
-                         {'TTL','269s'}]}],
+                         {'TTL','269s'},
+                         {'Status', 'passing'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
       end},
       {"with deregister set", fun() ->
