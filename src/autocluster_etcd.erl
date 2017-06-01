@@ -47,7 +47,7 @@ nodelist() ->
 %% @end.
 -spec lock(string()) -> ok | {error, string()}.
 lock(Who) ->
-    Now = time_compat:erlang_system_time(seconds),
+    Now = erlang:system_time(seconds),
     EndTime = Now + autocluster_config:get(lock_wait_time),
     lock(Who ++ " - " ++ generate_unique_string(), Now, EndTime).
 

@@ -35,6 +35,7 @@
          {config, consul_scheme,         "CONSUL_SCHEME",          "http",       string,  false},
          {config, consul_host,           "CONSUL_HOST",            "localhost",  string,  false},
          {config, consul_port,           "CONSUL_PORT",            8500,         integer, true},
+         {config, consul_lock_prefix,    "CONSUL_LOCK_PREFIX",     "rabbitmq",   string,  false},
          {config, consul_domain,         "CONSUL_DOMAIN",          "consul",     string,  false},
          {config, consul_svc,            "CONSUL_SVC",             "rabbitmq",   string,  false},
          {config, consul_svc_addr,       "CONSUL_SVC_ADDR",        "undefined",  string,  false},
