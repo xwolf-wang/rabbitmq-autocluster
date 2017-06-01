@@ -112,7 +112,7 @@ The following settings are available for all service discovery backends:
   <dt>Failure Mode</dt>
   <dd>What behavior to use when the node fails to cluster with an existing RabbitMQ cluster or during initialization of the autocluster plugin. The two valid options are <code>ignore</code> and <code>stop</code>.</dd>
   <dt>Log Level</dt>
-  <dd>Prior to <em>v0.6</em>, log level can be set using RabbitMQ's <code>log_levels</code> configuration - as described at the end of this page. Starting with <em>v0.6</em> you can set the log level via the environment variable <code>AUTOCLUSTER_LOG_LEVEL</code> or the <code>autocluster_log_level</code> setting of the <code>autocluster</code> application.</dd>
+  <dd>You can set the log level via the environment variable <code>AUTOCLUSTER_LOG_LEVEL</code> or the <code>autocluster.autocluster_log_level</code> key (see below).</dd>
   <dt>Longname (FQDN) Support</dt>
   <dd>This is a RabbitMQ  environment variable setting that is used by the autocluster plugin as well. When set to <code>true</code> this will cause RabbitMQ <b>and the</b> autocluster plugin to use fully qualified names to identify nodes. For more information about the <code>RABBITMQ_USE_LONGNAME</code> environment variable, see the <a href="https://www.rabbitmq.com/configure.html#define-environment-variables">RabbitMQ documentation</a></dd>
   <dt>Node Name</dt>
@@ -150,20 +150,26 @@ The following chart details each general setting, with the environment variable 
 | Cleanup Interval  | ``CLEANUP_INTERVAL``      | ``cleanup_interval``      | ``integer`` | ``60``               |
 | Cleanup Warn Only | ``CLEANUP_WARN_ONLY``     | ``cleanup_warn_only``     | ``bool``    | ``true``             |
 
-#### Logging Configuration prior to *v0.6*
+#### Logging Configuration
 
-This is the only way to enable debug logging for the plugin for versions prior to v0.6. Since v0.6 it's no longer effective, you should use ``AUTOCLUSTER_LOG_LEVEL`` environment variable or ``autocluster_log_level`` setting.
+To configure logging level used by this plugin, use the
+``AUTOCLUSTER_LOG_LEVEL`` environment variable or
+`autocluster.autocluster_log_level` setting.
 
-autocluster will register itself as a configured logger with RabbitMQ if no log configuration for it exists. To configure logging for the plugin, you add it to the ``rabbit`` ``log_levels`` configuration like so:
+Here's a very minimalistic example that enables debug logging:
 
 ```erlang
 
-[{rabbit, [
-           {log_levels, [{autocluster, debug}, {connection, info}]}
-                        ]}].
+[
+  {autocluster, [
+    {autocluster_log_level, debug}
+  ]}
+].
 ```
 
-Valid log levels are ``debug``, ``info``, ``warning``, and ``error``. For more information on configuring RabbitMQ logging, reference the ``log_levels`` key in the [RabbitMQ documentation](https://www.rabbitmq.com/configure.html).
+Valid log levels are `debug`, `info`, `warning`, and
+`error`. For more information on RabbitMQ configuration please refer to [RabbitMQ documentation](https://www.rabbitmq.com/configure.html).
+
 
 ### AWS Configuration
 
@@ -321,11 +327,11 @@ The following settings impact the configuration of the [Consul](http://consul.io
   <dt>Service Name</dt>
   <dd>The name of the service to register with Consul for automatic clustering</dd>
   <dt>Service Address</dt>
-  <dd>An IP address or host name to use when registering the service. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node. If this is specified, the value will automatically be appended to the service ID. <em>(optional) - Added in v0.5</em></dd>
+  <dd>An IP address or host name to use when registering the service. If this is specified, the value will automatically be appended to the service ID. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node.<em>(optional)</em></dd>
   <dt>Service Auto Address</dt>
-  <dd>Use the hostname of the current machine for the service address when registering the service with Consul. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node. If this is enabled, the hostname will automatically be appended to the service ID. <em>(optional) - Added in v0.5</em></dd>
+  <dd>Use the hostname of the current machine (retrieved with `gethostname(2)`) for the service address when registering the service with Consul. If this is enabled, the hostname will automatically be appended to the service ID. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node. <em>(optional)</em></dd>
   <dt>Service Auto Address by NIC</dt>
-  <dd>Use the IP address of the specified network interface controller (NIC) as the service address when registering with Consul. <em>(optional) - Added in v0.6</em></dd>
+  <dd>Use the IP address of the specified network interface controller (NIC) as the service address when registering with Consul. <em>(optional)</em></dd>
   <dt>Service Port</dt>
   <dd>Used to set a port for the service in Consul, allowing for the automatic clustering service registration to double as a general RabbitMQ service registration.
 
@@ -340,42 +346,88 @@ The following settings impact the configuration of the [Consul](http://consul.io
 
 #### Configuration Details
 
-| Setting               | Environment Variable      | Setting Key                | Type        | Default       |
-|-----------------------|---------------------------|----------------------------|-------------|---------------|
-| Consul Scheme         | ``CONSUL_SCHEME``         | ``consul_scheme``          | ``string``  | ``http``      |
-| Consul Host           | ``CONSUL_HOST``           | ``consul_host``            | ``string``  | ``localhost`` |
-| Consul Port           | ``CONSUL_PORT``           | ``consul_port``            | ``integer`` | ``8500``      |
-| Consul ACL Token      | ``CONSUL_ACL_TOKEN``      | ``consul_acl_token``       | ``string``  |               |
-| Service Name          | ``CONSUL_SVC``            | ``consul_svc``             | ``string``  | ``rabbitmq``  |
-| Service Address       | ``CONSUL_SVC_ADDR``       | ``consul_svc_addr``        | ``string``  |               |
-| Service Auto Address  | ``CONSUL_SVC_ADDR_AUTO``  | ``consul_svc_addr_auto``   | ``boolean`` | ``false``     |
+| Setting                      | Environment Variable      | Setting Key                | Type        | Default       |
+|------------------------------|---------------------------|----------------------------|-------------|---------------|
+| Consul Scheme                | ``CONSUL_SCHEME``         | ``consul_scheme``          | ``string``  | ``http``      |
+| Consul Host                  | ``CONSUL_HOST``           | ``consul_host``            | ``string``  | ``localhost`` |
+| Consul Port                  | ``CONSUL_PORT``           | ``consul_port``            | ``integer`` | ``8500``      |
+| Consul ACL Token             | ``CONSUL_ACL_TOKEN``      | ``consul_acl_token``       | ``string``  |               |
+| Service Name                 | ``CONSUL_SVC``            | ``consul_svc``             | ``string``  | ``rabbitmq``  |
+| Service Address              | ``CONSUL_SVC_ADDR``       | ``consul_svc_addr``        | ``string``  |               |
+| Service Auto Address         | ``CONSUL_SVC_ADDR_AUTO``  | ``consul_svc_addr_auto``   | ``boolean`` | ``false``     |
 | Service Auto Address by NIC  | ``CONSUL_SVC_ADDR_NIC``   | ``consul_svc_addr_nic``    | ``string``  |               |
-| Service Port          | ``CONSUL_SVC_PORT``       | ``consul_svc_port``        | ``integer`` | ``5672``      |
-| Service TTL           | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
-| Consul Use Longname   | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
-| Consul Domain         | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
+| Service Port                 | ``CONSUL_SVC_PORT``       | ``consul_svc_port``        | ``integer`` | ``5672``      |
+| Service TTL                  | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
+| Consul Use Longname          | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
+| Consul Domain                | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
 
 #### Example rabbitmq.config
+
 ```erlang
 
-[{autocluster,
- [
-  {backend, consul},
+An example that configures an ACL token and contacts a local Consul agent:
+
+[
+  {rabbit,      []},
+  {autocluster, [
+            {backend, consul},
             {consul_host, "localhost"},
             {consul_port, 8500},
             {consul_acl_token, "example-acl-token"},
             {consul_svc, "rabbitmq-test"},
             {cluster_name, "test"}
-            ]}
-                 ].
+  ]}
+].
 ```
 
-#### Example docker compose
+The following example can be used to for a cluster of N nodes, one
+running on a development machine (`my-laptop.local`) and N - 1 running
+in VMs or containers with access to host networking.
 
-The [example](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable/examples/compose_consul_haproxy) shows how to create a dynamic RabbitMQ cluster, using:
-- [Docker compose](https://docs.docker.com/compose/)
-- [Consul](https://www.consul.io) 
-- [HA proxy](https://github.com/docker/dockercloud-haproxy)
+Node names will be `rabbit@my-laptop.local`, `rabbit@vm1.local`,
+and `rabbit@vm2.local`.
+
+``` erlang
+[
+  {rabbit,      []},
+  {autocluster, [
+            {backend, consul},
+            {consul_host, "my-laptop.local"},
+            {consul_port, 8500},
+            {consul_use_longname, true},
+            {consul_svc, "rabbitmq"},
+            {consul_svc_addr_auto, true},
+            {consul_svc_addr_nodename, true}
+  ]}
+].
+```
+
+In the following example, the service address reported to Consul is hardcoded
+to `hostname1.local` instead of being computed automatically from the environment:
+
+``` erlang
+[
+  {rabbit,      []},
+  {autocluster, [
+            {backend, consul},
+            {consul_host, "my-laptop.local"},
+            {consul_port, 8500},
+            {consul_use_longname, true},
+            {consul_svc, "rabbitmq"},
+            {consul_svc_addr_auto, false},
+            {consul_svc_addr, "hostname1.messaging.dev.local"}
+  ]}
+].
+```
+
+#### Example Docker Compose File
+
+The [example](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable/examples/compose_consul_haproxy) demonstrates
+how to create a dynamic RabbitMQ cluster using:
+
+ * [Docker compose](https://docs.docker.com/compose/)
+ * [Consul](https://www.consul.io) 
+ * [HA proxy](https://github.com/docker/dockercloud-haproxy)
 
 ### DNS configuration
 
@@ -398,14 +450,11 @@ The following configuration example enables the DNS based cluster discovery and 
 
 ```erlang
 [
- {rabbit, [
-           {log_levels, [{autocluster, debug}, {connection, debug}]}
-                        ]},
-                         {autocluster, [
-                                        {backend, dns},
-                                                  {autocluster_host, "YOUR_ROUND_ROBIN_A_RECORD"}
-                                                  ]}
-                                                   ].
+  {autocluster, [
+    {backend, dns},
+    {autocluster_host, "YOUR_ROUND_ROBIN_A_RECORD"}
+  ]}
+].
 ```
 
 #### Troubleshooting

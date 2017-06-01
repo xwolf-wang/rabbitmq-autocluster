@@ -25,9 +25,10 @@ get_node_from_key_test() ->
 get_node_from_key_leading_slash_test() ->
   ?assertEqual('rabbit@foo', autocluster_etcd:get_node_from_key(<<"/rabbitmq/default/foo">>)).
 
+
 node_path_test() ->
   autocluster_testing:reset(),
-  Expectation = [v2, keys, "rabbitmq", "default", atom_to_list(node())],
+  Expectation = [v2, keys, "rabbitmq", "default", nodes, atom_to_list(node())],
   ?assertEqual(Expectation, autocluster_etcd:node_path()).
 
 nodelist_without_existing_directory_test_() ->

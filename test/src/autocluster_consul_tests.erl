@@ -4,55 +4,6 @@
 
 -include("autocluster.hrl").
 
-
-init_test_() ->
-  {
-    foreach,
-    fun() ->
-      autocluster_testing:reset(),
-      meck:new(timer, [unstick, passthrough]),
-      meck:new(autocluster_log, []),
-      [timer, autocluster_log]
-    end,
-    fun autocluster_testing:on_finish/1,
-    [
-      {"default config", fun() ->
-        meck:expect(autocluster_log, debug, fun(_Message) ->
-            ok
-          end),
-        meck:expect(timer, apply_interval, fun(Interval, M, F, A) ->
-            ?assertEqual(Interval, 15000),
-            ?assertEqual(M, autocluster_consul),
-            ?assertEqual(F, send_health_check_pass),
-            ?assertEqual(A, []),
-            {ok, "started"}
-          end),
-        os:putenv("AUTOCLUSTER_TYPE", "consul"),
-        ?assertEqual(ok, autocluster_consul:init()),
-        ?assert(meck:validate(autocluster_log)),
-        ?assert(meck:validate(timer))
-       end},
-      {"ttl disabled", fun() ->
-        meck:expect(timer, apply_interval, fun(_, _, _, _) ->
-          {error, "should not be called"}
-         end),
-        os:putenv("AUTOCLUSTER_TYPE", "consul"),
-        os:putenv("CONSUL_SVC_TTL", ""),
-        ?assertEqual(ok, autocluster_consul:init()),
-        ?assert(meck:validate(timer))
-       end},
-      {"other backend", fun() ->
-        meck:expect(timer, apply_interval, fun(_, _, _, _) ->
-          {error, "should not be called"}
-         end),
-        os:putenv("AUTOCLUSTER_TYPE", "aws"),
-        ?assertEqual(ok, autocluster_consul:init()),
-        ?assert(meck:validate(timer))
-       end}
-    ]
-  }.
-
-
 build_registration_body_test_() ->
   {
     foreach,
@@ -80,10 +31,13 @@ build_registration_body_test_() ->
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
        end},
       {"with ttl set", fun() ->
-        os:putenv("CONSUL_SVC_TTL", ""),
+        os:putenv("CONSUL_SVC_TTL", "269"),
         Expectation = [{'ID','rabbitmq'},
                        {'Name',rabbitmq},
-                       {'Port',5672}],
+                       {'Port',5672},
+                       {'Check',
+                        [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
+                         {'TTL','269s'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
       end},
       {"with deregister set", fun() ->
@@ -97,7 +51,7 @@ build_registration_body_test_() ->
               {'Deregister_critical_service_after','257s'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
       end},
-      {"with unset deregister and ttl set", fun() ->
+      {"with unset deregister and ttl", fun() ->
         os:putenv("CONSUL_DEREGISTER_AFTER", ""),
         os:putenv("CONSUL_SVC_TTL", ""),
         Expectation = [{'ID','rabbitmq'},
@@ -307,12 +261,15 @@ register_test_() ->
       autocluster_testing:reset(),
       meck:new(autocluster_httpc, []),
       meck:new(autocluster_util, [passthrough]),
-      [autocluster_httpc, autocluster_util]
+      meck:new(timer, [unstick, passthrough]),
+      meck:new(autocluster_log, []),
+      [autocluster_httpc, autocluster_util, timer, autocluster_log]
     end,
     fun autocluster_testing:on_finish/1,
     [
       {"default values",
         fun() ->
+          meck:expect(autocluster_log, debug, fun(_Message) -> ok end),
           meck:expect(autocluster_httpc, post,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
@@ -324,7 +281,16 @@ register_test_() ->
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
+          meck:expect(timer, apply_interval, fun(Interval, M, F, A) ->
+            ?assertEqual(Interval, 15000),
+            ?assertEqual(M, autocluster_consul),
+            ?assertEqual(F, send_health_check_pass),
+            ?assertEqual(A, []),
+            {ok, "started"}
+          end),
           ?assertEqual(ok, autocluster_consul:register()),
+          ?assert(meck:validate(autocluster_log)),
+          ?assert(meck:validate(timer)),
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"with cluster",
@@ -457,7 +423,16 @@ register_test_() ->
           ?assert(meck:validate(autocluster_httpc)),
           ?assert(meck:validate(autocluster_util))
         end
-      }
+      },
+      {"ttl disabled - periodic health check not started", fun() ->
+        meck:expect(timer, apply_interval, fun(_, _, _, _) ->
+          {error, "should not be called"}
+         end),
+        meck:expect(autocluster_httpc, post, fun (_, _, _, _, _, _) -> {ok, []} end),
+        os:putenv("CONSUL_SVC_TTL", ""),
+        ?assertEqual(ok, autocluster_consul:register()),
+        ?assert(meck:validate(timer))
+       end}
     ]
   }.
 

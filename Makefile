@@ -1,22 +1,26 @@
-PROJECT = autocluster
+PROJECT = rabbitmq_autocluster
 PROJECT_DESCRIPTION = Forms RabbitMQ clusters using a variety of backends (AWS EC2, DNS, Consul, Kubernetes, etc)
-PROJECT_MOD = autocluster_app
+PROJECT_MOD = rabbitmq_autocluster_app
 PROJECT_REGISTERED = autocluster_app autocluster_sup autocluster_cleanup
 
 define PROJECT_ENV
 []
 endef
 
-DEPS = rabbit_common rabbitmq_aws
+define PROJECT_APP_EXTRA_KEYS
+	{broker_version_requirements, []}
+endef
 
-TEST_DEPS += rabbit rabbitmq_ct_helpers meck
+DEPS = rabbit rabbit_common  rabbitmq_aws
+
+TEST_DEPS += rabbit erlsh rabbitmq_ct_helpers meck
 IGNORE_DEPS += rabbitmq_java_client
 
 DEP_PLUGINS = rabbit_common/mk/rabbitmq-plugin.mk
 
 NO_AUTOPATCH += rabbitmq_aws
 
-dep_rabbitmq_aws = git https://github.com/rabbitmq/rabbitmq-aws.git stable
+dep_rabbitmq_aws = git https://github.com/rabbitmq/rabbitmq-aws.git master
 
 # FIXME: Use erlang.mk patched for RabbitMQ, while waiting for PRs to be
 # reviewed and merged.
