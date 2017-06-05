@@ -3,11 +3,13 @@ RabbitMQ Autocluster
 
 A RabbitMQ plugin that clusters nodes automatically using a number of peer discovery mechanisms:
 
+* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
+* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/),
+* [Kubernetes](https://kubernetes.io/)
+* DNS A records,
 * [Consul](https://consul.io),
 * [etcd2](https://github.com/coreos/etcd),
-* DNS A records,
-* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
-* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/).
+
 
 **Note:** This plugin is not a replacement for first-hand knowledge of
 how to manually create a RabbitMQ cluster. If you run into issues
