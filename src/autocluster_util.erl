@@ -341,3 +341,4 @@ as_proplist(Value) ->
     autocluster_log:error("Unexpected data type for proplist value: ~p.~n",
                           [Value]),
     [].
+

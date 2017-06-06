@@ -6,13 +6,8 @@
 
 
 extract_nodes_test() ->
-  Values =  [
-              {<<"node">>, [
-                {<<"nodes">>, [
-                   [{<<"key">>, <<"rabbitmq/default/foo">>}],
-                  [{<<"key">>, <<"rabbitmq/default/bar">>}],
-                    [{<<"key">>, <<"rabbitmq/default/baz">>}]]}]}],
-  Expectation = ['rabbit@foo', 'rabbit@bar', 'rabbit@baz'],
+  Values =  #{<<"action">> => <<"get">>,<<"node">> => #{<<"createdIndex">> => 4,<<"dir">> => true,<<"key">> => <<"/rabbitmq/default/nodes">>,<<"modifiedIndex">> => 4,<<"nodes">> => [#{<<"createdIndex">> => 4,<<"expiration">> => <<"2017-06-06T13:24:49.430945264Z">>,<<"key">> => <<"/rabbitmq/default/nodes/rabbit@172.17.0.7">>,<<"modifiedIndex">> => 4,<<"ttl">> => 24,<<"value">> => <<"enabled">>},#{<<"createdIndex">> => 7,<<"expiration">> => <<"2017-06-06T13:24:51.846531249Z">>,<<"key">> => <<"/rabbitmq/default/nodes/rabbit@172.17.0.5">>,<<"modifiedIndex">> => 7,<<"ttl">> => 26,<<"value">> => <<"enabled">>}]}},
+  Expectation = ['rabbit@172.17.0.7', 'rabbit@172.17.0.5'],
   ?assertEqual(Expectation, autocluster_etcd:extract_nodes(Values)).
 
 base_path_test() ->
@@ -20,10 +15,10 @@ base_path_test() ->
   ?assertEqual([v2, keys, "rabbitmq", "default"], autocluster_etcd:base_path()).
 
 get_node_from_key_test() ->
-  ?assertEqual('rabbit@foo', autocluster_etcd:get_node_from_key(<<"rabbitmq/default/foo">>)).
+  ?assertEqual('rabbit@foo', autocluster_etcd:get_node_from_key(<<"rabbitmq/default/nodes/foo">>)).
 
 get_node_from_key_leading_slash_test() ->
-  ?assertEqual('rabbit@foo', autocluster_etcd:get_node_from_key(<<"/rabbitmq/default/foo">>)).
+  ?assertEqual('rabbit@foo', autocluster_etcd:get_node_from_key(<<"/rabbitmq/default/nodes/foo">>)).
 
 
 node_path_test() ->

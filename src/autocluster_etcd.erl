@@ -102,7 +102,7 @@ lock(UniqueId, _, EndTime) ->
             {ok, UniqueId};
         false ->
             wait_for_lock_release(),
-            lock(UniqueId, time_compat:erlang_system_time(seconds), EndTime);
+            lock(UniqueId, erlang:system_time(seconds), EndTime);
         {error, Reason} ->
             {error, lists:flatten(io_lib:format("Error while acquiring the lock, reason: ~p", [Reason]))}
     end.
@@ -162,7 +162,7 @@ startup_lock_path() ->
 -spec extract_nodes(list(), list()) -> [node()].
 extract_nodes([], Nodes) -> Nodes;
 extract_nodes([H|T], Nodes) ->
-  extract_nodes(T, lists:append(Nodes, [get_node_from_key(proplists:get_value(<<"key">>, H))])).
+  extract_nodes(T, lists:append(Nodes, [get_node_from_key(maps:get(<<"key">>, H))])).
 
 %% @doc Return the list of erlang nodes
 %% @end
@@ -170,8 +170,8 @@ extract_nodes([H|T], Nodes) ->
 -spec extract_nodes(list()) -> [node()].
 extract_nodes([]) -> [];
 extract_nodes(Nodes) ->
-  Dir = proplists:get_value(<<"node">>, Nodes),
-  case proplists:get_value(<<"nodes">>, Dir) of
+  Dir = maps:get(<<"node">>, Nodes),
+  case maps:get(<<"nodes">>, Dir, undefined) of
     undefined -> [];
     Values    -> extract_nodes(Values, [])
   end.
@@ -187,7 +187,7 @@ get_node_from_key(V) ->
   %% etcd returns node keys as /<etcd-prefix>/<cluster-name>/nodes/<nodename>
   %% We are mapping path components from "<etcd-prefix>" up to "nodes",
   %% and discarding the same number of characters from the key returned by etcd.
-  Path = string:concat(autocluster_httpc:build_path(lists:sublist(nodes_path(), 3, 2)), "/"),
+  Path = string:concat(autocluster_httpc:build_path(lists:sublist(nodes_path(), 3, 3)), "/"),
   autocluster_util:node_name(string:substr(binary_to_list(V), length(Path))).
 
 
@@ -197,7 +197,7 @@ get_node_from_key(V) ->
 %% @end
 -spec generate_unique_string() -> string().
 generate_unique_string() ->
-    [ $a - 1 + rand_compat:uniform(26) || _ <- lists:seq(1, 32) ].
+    [ $a - 1 + rand:uniform(26) || _ <- lists:seq(1, 32) ].
 
 %% @doc Tries to acquire a lock in etcd. This can either succeed, fail
 %% because somebody else is holding the lock, or completely file due

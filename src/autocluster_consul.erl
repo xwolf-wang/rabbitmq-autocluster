@@ -135,10 +135,10 @@ lock(SessionId, _, EndTime) ->
         {ok, false} ->
             case get_lock_status() of
                 {ok, {SessionHeld, ModifyIndex}} ->
-                    Wait = max(EndTime - time_compat:erlang_system_time(seconds), 0),
+                    Wait = max(EndTime - erlang:system_time(seconds), 0),
                     case wait_for_lock_release(SessionHeld, ModifyIndex, Wait) of
                         ok ->
-                            lock(SessionId, time_compat:erlang_system_time(seconds), EndTime);
+                            lock(SessionId, erlang:system_time(seconds), EndTime);
                         {error, Reason} ->
                             {error, lists:flatten(io_lib:format("Error waiting for lock release, reason: ~s",[Reason]))}
                     end;

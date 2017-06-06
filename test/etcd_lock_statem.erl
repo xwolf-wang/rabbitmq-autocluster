@@ -262,7 +262,7 @@ release_current_lock(#server_state{current_lock_pid = CurrentPid} = State) ->
 
 release_broken_lock(#server_state{broken_locks = Broken} = State) ->
     BrokenList = maps:to_list(Broken),
-    {_ChosenName, ChosenPid} = lists:nth(rand_compat:uniform(length(BrokenList)), BrokenList),
+    {_ChosenName, ChosenPid} = lists:nth(rand:uniform_s(length(BrokenList)), BrokenList),
     ChosenPid ! unlock_broken,
     State.
 

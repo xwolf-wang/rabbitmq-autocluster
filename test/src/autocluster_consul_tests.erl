@@ -627,9 +627,10 @@ without_warnings() ->
     "[{\"Node\": {\"Node\": \"rabbit2.internal.domain\", \"Address\": \"10.20.16.160\"}, \"Checks\": [{\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq:172.172.16.4.50\", \"Output\": \"\"}, {\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"172.16.4.51\", \"Port\": 5672, \"ID\": \"rabbitmq:172.16.4.51\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}, {\"Node\": {\"Node\": \"rabbit1.internal.domain\", \"Address\": \"10.20.16.159\"}, \"Checks\": [{\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"172.172.16.51\", \"Port\": 5672, \"ID\": \"rabbitmq:172.172.16.51\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}]".
 
 get_session_id_test() ->
+  Session = #{<<"ID">> => <<"session-id">>},
   ?assertEqual("session-id",
-               autocluster_consul:get_session_id([{<<"ID">>,
-                                                           <<"session-id">>}])).
+               autocluster_consul:get_session_id(Session)).
+
 startup_lock_path_test_() ->
   {
     foreach,
@@ -674,7 +675,7 @@ create_session_test_() ->
               ?assertEqual([], Args),
               Expect = <<"{\"Name\":\"node-name\",\"TTL\":\"30s\"}">>,
               ?assertEqual(Expect, Body),
-              {ok, [{<<"ID">>, <<"session-id">>}]}
+              {ok, #{<<"ID">> => <<"session-id">>}}
             end),
           ?assertEqual({ok, "session-id"}, autocluster_consul:create_session("node-name", 30)),
           ?assert(meck:validate(autocluster_httpc))
@@ -690,7 +691,7 @@ create_session_test_() ->
             ?assertEqual([{token, "token-value"}], Args),
             Expect = <<"{\"Name\":\"node-name\",\"TTL\":\"30s\"}">>,
             ?assertEqual(Expect, Body),
-            {ok, [{<<"ID">>, <<"session-id">>}]}
+            {ok, #{<<"ID">> => <<"session-id">>}}
           end),
         os:putenv("CONSUL_ACL_TOKEN", "token-value"),
         ?assertEqual({ok, "session-id"}, autocluster_consul:create_session("node-name", 30)),
