@@ -3,11 +3,13 @@ RabbitMQ Autocluster
 
 A RabbitMQ plugin that clusters nodes automatically using a number of peer discovery mechanisms:
 
+* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
+* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/),
+* [Kubernetes](https://kubernetes.io/)
+* DNS A records,
 * [Consul](https://consul.io),
 * [etcd2](https://github.com/coreos/etcd),
-* DNS A records,
-* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
-* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/).
+
 
 **Note:** This plugin is not a replacement for first-hand knowledge of
 how to manually create a RabbitMQ cluster. If you run into issues
@@ -106,7 +108,7 @@ The following settings are available for all service discovery backends:
 
 <dl>
   <dt>Backend Type</dt>
-  <dd>Which type of service discovery backend to use. One of <code>aws</code>, <code>consul</code>, <code>dns</code>, or <code>etcd</code>.</dd>
+  <dd>Which type of service discovery backend to use. One of <code>aws</code>, <code>consul</code>, <code>dns</code>, <code>etcd</code> or <code>k8s</code>.</dd>
   <dt>Startup Delay</dt>
   <dd>To prevent a race condition when creating a new cluster for the first time, the startup delay performs a random sleep that should cause nodes to start in a slightly random offset from each other. The setting lets you control the maximum value for the startup delay.</dd>
   <dt>Failure Mode</dt>
@@ -483,125 +485,65 @@ inet,4,
 
 The following settings apply to the [etcd](https://coreos.com/etcd/docs/latest/) backend only:
 
+<dl>
+  <dt>etcd Scheme</dt>
+  <dd>The URI scheme to use when connecting to etcd</dd>
+  <dt>etcd Host</dt>
+  <dd>The hostname to use when connecting to etcd's API</dd>
+  <dt>etcd Port</dt>
+  <dd>The port to connect to when using to etcd's API</dd>
+  <dt>etcd Key Prefix</dt>
+  <dd>The prefix used when storing cluster membership keys in etcd</dd>
+  <dt>etcd Node TTL</dt>
+  <dd>Used to specify how long a node can be down before it is removed from etcd's list of RabbitMQ nodes in the cluster</dd>
+</dl>
+
+| Setting         | Environment Variable | Setting Key     | Type        | Default       |
+|-----------------|----------------------|-----------------|-------------|---------------|
+| etcd Scheme     | ``ETCD_SCHEME``      | ``etcd_scheme`` | ``list``    | ``http``      |
+| etcd Host       | ``ETCD_HOST``        | ``etcd_host``   | ``list``    | ``localhost`` |
+| etcd Port       | ``ETCD_PORT``        | ``etcd_port``   | ``int``     | ``2379``      |
+| etcd Key Prefix | ``ETCD_PREFIX``      | ``etcd_prefix`` | ``list``    | ``rabbitmq``  |
+| etcd Node TTL   | ``ETCD_TTL``         | ``etcd_ttl``    | ``integer`` | ``30``        |
+
 **NOTE** The etcd backend only supports etcd v2.
-
-**etcd URL Scheme**
-
-The URI scheme to use when connecting to etcd
-
-| Environment Variable | ``ETCD_SCHEME``        |
-|----------------------|------------------------|
-| Setting Key          | ``etcd_scheme``        |
-| Data type            | ``list``               |
-| Default Value        | ``http``               |
-
-**etcd Host**
-
-The hostname to use when connecting to etcd's API
-
-| Environment Variable | ``ETCD_HOST``          |
-|----------------------|------------------------|
-| Setting Key          | ``etcd_host``          |
-| Data type            | ``list``               |
-| Default Value        | ``localhost``          |
-
-**etcd Port**
-
-The port to connect to when using to etcd's API
-
-| Environment Variable | ``ETCD_PORT``          |
-|----------------------|------------------------|
-| Setting Key          | ``etcd_port``          |
-| Data type            | ``int``                |
-| Default Value        | ``2379``               |
-
-**etcd Key Prefix**
-
-The prefix used when storing cluster membership keys in etcd
-
-| Environment Variable | ``ETCD_PREFIX``         |
-|----------------------|-------------------------|
-| Setting Key          | ``etcd_prefix``         |
-| Data type            | ``list``                |
-| Default Value        | ``rabbitmq``            |
-
-**etcd Node TTL**
-
-Used to specify how long a node can be down before it is removed from etcd's
-list of RabbitMQ nodes in the cluster
-
-| Environment Variable | ``ETCD_TTL``            |
-|----------------------|-------------------------|
-| Setting Key          | ``etcd_ttl``            |
-| Data type            | ``integer``             |
-| Default Value        | ``30``                  |
 
 ### K8S configuration
 
 The following settings impact the configuration of the [Kubernetes](http://kubernetes.io) backend for the autocluster plugin:
 
-K8S Scheme
-The URI scheme to use when connecting to Kubernetes API server
+<dl>
+  <dt>K8S Scheme</dt>
+  <dd>The URI scheme to use when connecting to Kubernetes API server</dd>
+  <dt>K8S Host</dt>
+  <dd>The hostname of the kubernetes API server</dd>
+  <dt>K8S Port</dt>
+  <dd>The port ot use when connecting to kubernetes API server</dd>
+  <dt>K8S Token Path</dt>
+  <dd>The token path of the Pod's service account</dd>
+  <dt>K8S Cert Path</dt>
+  <dd>The path of the service account authentication certificate with the k8s API server</dd>
+  <dt>K8S Namespace Path</dt>
+  <dd>The path of the service account namespace file</dd>
+  <dt>K8S Service Name</dt>
+  <dd>The rabbitmq service name in Kubernetes</dd>
+  <dt>K8S Adddress Type</dt>
+  <dd>The address type, either ip or hostname</dd>
+  <dt>K8S Hostname Suffix</dt>
+  <dd>The suffix to append to the hostname</dd>
+</dl>
 
-| Environment Variable | ``K8S_SCHEME``         |
-|----------------------|------------------------|
-| Setting Key          | ``k8s_scheme``         |
-| Data type            | ``string``             |
-| Default Value        | ``https``              |
-
-K8S Host
-The hostname of the kubernetes API server
-
-| Environment Variable | ``K8S_HOST``                             |
-|----------------------|------------------------------------------|
-| Setting Key          | ``k8s_host``                             |
-| Data type            | ``string``                               |
-| Default Value        | ``kubernetes.default.svc.cluster.local`` |
-
-K8S Port
-The port ot use when connecting to kubernetes API server
-
-| Environment Variable | ``K8S_PORT``           |
-|----------------------|------------------------|
-| Setting Key          | ``k8s_port``           |
-| Data type            | ``integer``            |
-| Default Value        | ``443``                |
-
-K8S Token Path
-The token path of the Pod's service account
-
-| Environment Variable | ``K8S_TOKEN_PATH``                                      |
-|----------------------|---------------------------------------------------------|
-| Setting Key          | ``k8s_token_path``                                      |
-| Data type            | ``string``                                              |
-| Default Value        | ``/var/run/secrets/kubernetes.io/serviceaccount/token`` |
-
-K8S Cert Path
-The path of the service account authentication certificate with the k8s API server
-
-| Environment Variable | ``K8S_CERT_PATH``                                        |
-|----------------------|----------------------------------------------------------|
-| Setting Key          | ``k8s_cert_path``                                        |
-| Data type            | ``string``                                               |
-| Default Value        | ``/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`` |
-
-K8S Namespace Path
-The path of the service account namespace file
-
-| Environment Variable | ``K8S_NAMESPACE_PATH``                                      |
-|----------------------|-------------------------------------------------------------|
-| Setting Key          | ``k8s_namespace_path``                                      |
-| Data type            | ``string``                                                  |
-| Default Value        | ``/var/run/secrets/kubernetes.io/serviceaccount/namespace`` |
-
-K8S Service Name
-The rabbitmq service name in Kubernetes
-
-| Environment Variable | ``K8S_SERVICE_NAME``   |
-|----------------------|------------------------|
-| Setting Key          | ``k8s_service_name``   |
-| Data type            | ``string``             |
-| Default Value        | ``rabbitmq``           |
+| Setting             | Environment Variable    | Setting Key             | Type        | Default                                                     |
+|---------------------|-------------------------|-------------------------|-------------|-------------------------------------------------------------|
+| K8S Scheme          | ``K8S_SCHEME``          | ``k8s_scheme``          | ``string``  | ``https``                                                   |
+| K8S Host            | ``K8S_HOST``            | ``k8s_host``            | ``string``  | ``kubernetes.default.svc.cluster.local``                    |
+| K8S Port            | ``K8S_PORT``            | ``k8s_port``            | ``integer`` | ``443``                                                     |
+| K8S Token Path      | ``K8S_TOKEN_PATH``      | ``k8s_token_path``      | ``string``  | ``/var/run/secrets/kubernetes.io/serviceaccount/token``     |
+| K8S Cert Path       | ``K8S_CERT_PATH``       | ``k8s_cert_path``       | ``string``  | ``/var/run/secrets/kubernetes.io/serviceaccount/ca.crt``    |
+| K8S Namespace Path  | ``K8S_NAMESPACE_PATH``  | ``k8s_namespace_path``  | ``string``  | ``/var/run/secrets/kubernetes.io/serviceaccount/namespace`` |
+| K8S Service Name    | ``K8S_SERVICE_NAME``    | ``k8s_service_name``    | ``string``  | ``rabbitmq``                                                |
+| K8S Adddress Type   | ``K8S_ADDRESS_TYPE``    | ``k8s_address_type``    | ``string``  | ``ip``                                                      |
+| K8S Hostname Suffix | ``K8S_HOSTNAME_SUFFIX`` | ``k8s_hostname_suffix`` | ``string``  |                                                             |
 
 
 #### Kubernetes Setup
