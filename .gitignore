@@ -24,3 +24,5 @@ cobertura.xml
 _build
 /apps/autocluster_aws/autocluster_aws.d
 /logs/
+rabbitmq_autocluster.d
+
