@@ -129,7 +129,7 @@ set_level(Level) ->
 %%--------------------------------------------------------------------
 -spec log(Level :: atom(), Message :: string(), Args :: list()) -> ok.
 log(Level, Message, Args) ->
-  rabbit_log:log(autocluster, Level,
+  rabbit_log:log(default, Level,
                  string:join(["autocluster: ", Message, "~n"], ""),
                  Args).
 

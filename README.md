@@ -3,11 +3,13 @@ RabbitMQ Autocluster
 
 A RabbitMQ plugin that clusters nodes automatically using a number of peer discovery mechanisms:
 
+* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
+* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/),
+* [Kubernetes](https://kubernetes.io/)
+* DNS A records,
 * [Consul](https://consul.io),
 * [etcd2](https://github.com/coreos/etcd),
-* DNS A records,
-* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
-* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/).
+
 
 **Note:** This plugin is not a replacement for first-hand knowledge of
 how to manually create a RabbitMQ cluster. If you run into issues
@@ -106,13 +108,13 @@ The following settings are available for all service discovery backends:
 
 <dl>
   <dt>Backend Type</dt>
-  <dd>Which type of service discovery backend to use. One of <code>aws</code>, <code>consul</code>, <code>dns</code>, or <code>etcd</code>.</dd>
+  <dd>Which type of service discovery backend to use. One of <code>aws</code>, <code>consul</code>, <code>dns</code>, <code>etcd</code> or <code>k8s</code>.</dd>
   <dt>Startup Delay</dt>
   <dd>To prevent a race condition when creating a new cluster for the first time, the startup delay performs a random sleep that should cause nodes to start in a slightly random offset from each other. The setting lets you control the maximum value for the startup delay.</dd>
   <dt>Failure Mode</dt>
   <dd>What behavior to use when the node fails to cluster with an existing RabbitMQ cluster or during initialization of the autocluster plugin. The two valid options are <code>ignore</code> and <code>stop</code>.</dd>
   <dt>Log Level</dt>
-  <dd>Prior to <em>v0.6</em>, log level can be set using RabbitMQ's <code>log_levels</code> configuration - as described at the end of this page. Starting with <em>v0.6</em> you can set the log level via the environment variable <code>AUTOCLUSTER_LOG_LEVEL</code> or the <code>autocluster_log_level</code> setting of the <code>autocluster</code> application.</dd>
+  <dd>You can set the log level via the environment variable <code>AUTOCLUSTER_LOG_LEVEL</code> or the <code>autocluster.autocluster_log_level</code> key (see below).</dd>
   <dt>Longname (FQDN) Support</dt>
   <dd>This is a RabbitMQ  environment variable setting that is used by the autocluster plugin as well. When set to <code>true</code> this will cause RabbitMQ <b>and the</b> autocluster plugin to use fully qualified names to identify nodes. For more information about the <code>RABBITMQ_USE_LONGNAME</code> environment variable, see the <a href="https://www.rabbitmq.com/configure.html#define-environment-variables">RabbitMQ documentation</a></dd>
   <dt>Node Name</dt>
@@ -150,20 +152,26 @@ The following chart details each general setting, with the environment variable 
 | Cleanup Interval  | ``CLEANUP_INTERVAL``      | ``cleanup_interval``      | ``integer`` | ``60``               |
 | Cleanup Warn Only | ``CLEANUP_WARN_ONLY``     | ``cleanup_warn_only``     | ``bool``    | ``true``             |
 
-#### Logging Configuration prior to *v0.6*
+#### Logging Configuration
 
-This is the only way to enable debug logging for the plugin for versions prior to v0.6. Since v0.6 it's no longer effective, you should use ``AUTOCLUSTER_LOG_LEVEL`` environment variable or ``autocluster_log_level`` setting.
+To configure logging level used by this plugin, use the
+``AUTOCLUSTER_LOG_LEVEL`` environment variable or
+`autocluster.autocluster_log_level` setting.
 
-autocluster will register itself as a configured logger with RabbitMQ if no log configuration for it exists. To configure logging for the plugin, you add it to the ``rabbit`` ``log_levels`` configuration like so:
+Here's a very minimalistic example that enables debug logging:
 
 ```erlang
 
-[{rabbit, [
-           {log_levels, [{autocluster, debug}, {connection, info}]}
-                        ]}].
+[
+  {autocluster, [
+    {autocluster_log_level, debug}
+  ]}
+].
 ```
 
-Valid log levels are ``debug``, ``info``, ``warning``, and ``error``. For more information on configuring RabbitMQ logging, reference the ``log_levels`` key in the [RabbitMQ documentation](https://www.rabbitmq.com/configure.html).
+Valid log levels are `debug`, `info`, `warning`, and
+`error`. For more information on RabbitMQ configuration please refer to [RabbitMQ documentation](https://www.rabbitmq.com/configure.html).
+
 
 ### AWS Configuration
 
@@ -321,11 +329,11 @@ The following settings impact the configuration of the [Consul](http://consul.io
   <dt>Service Name</dt>
   <dd>The name of the service to register with Consul for automatic clustering</dd>
   <dt>Service Address</dt>
-  <dd>An IP address or host name to use when registering the service. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node. If this is specified, the value will automatically be appended to the service ID. <em>(optional) - Added in v0.5</em></dd>
+  <dd>An IP address or host name to use when registering the service. If this is specified, the value will automatically be appended to the service ID. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node.<em>(optional)</em></dd>
   <dt>Service Auto Address</dt>
-  <dd>Use the hostname of the current machine for the service address when registering the service with Consul. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node. If this is enabled, the hostname will automatically be appended to the service ID. <em>(optional) - Added in v0.5</em></dd>
+  <dd>Use the hostname of the current machine (retrieved with `gethostname(2)`) for the service address when registering the service with Consul. If this is enabled, the hostname will automatically be appended to the service ID. This is useful when you are testing with a single Consul server instead of having an agent for every RabbitMQ node. <em>(optional)</em></dd>
   <dt>Service Auto Address by NIC</dt>
-  <dd>Use the IP address of the specified network interface controller (NIC) as the service address when registering with Consul. <em>(optional) - Added in v0.6</em></dd>
+  <dd>Use the IP address of the specified network interface controller (NIC) as the service address when registering with Consul. <em>(optional)</em></dd>
   <dt>Service Port</dt>
   <dd>Used to set a port for the service in Consul, allowing for the automatic clustering service registration to double as a general RabbitMQ service registration.
 
@@ -340,42 +348,88 @@ The following settings impact the configuration of the [Consul](http://consul.io
 
 #### Configuration Details
 
-| Setting               | Environment Variable      | Setting Key                | Type        | Default       |
-|-----------------------|---------------------------|----------------------------|-------------|---------------|
-| Consul Scheme         | ``CONSUL_SCHEME``         | ``consul_scheme``          | ``string``  | ``http``      |
-| Consul Host           | ``CONSUL_HOST``           | ``consul_host``            | ``string``  | ``localhost`` |
-| Consul Port           | ``CONSUL_PORT``           | ``consul_port``            | ``integer`` | ``8500``      |
-| Consul ACL Token      | ``CONSUL_ACL_TOKEN``      | ``consul_acl_token``       | ``string``  |               |
-| Service Name          | ``CONSUL_SVC``            | ``consul_svc``             | ``string``  | ``rabbitmq``  |
-| Service Address       | ``CONSUL_SVC_ADDR``       | ``consul_svc_addr``        | ``string``  |               |
-| Service Auto Address  | ``CONSUL_SVC_ADDR_AUTO``  | ``consul_svc_addr_auto``   | ``boolean`` | ``false``     |
+| Setting                      | Environment Variable      | Setting Key                | Type        | Default       |
+|------------------------------|---------------------------|----------------------------|-------------|---------------|
+| Consul Scheme                | ``CONSUL_SCHEME``         | ``consul_scheme``          | ``string``  | ``http``      |
+| Consul Host                  | ``CONSUL_HOST``           | ``consul_host``            | ``string``  | ``localhost`` |
+| Consul Port                  | ``CONSUL_PORT``           | ``consul_port``            | ``integer`` | ``8500``      |
+| Consul ACL Token             | ``CONSUL_ACL_TOKEN``      | ``consul_acl_token``       | ``string``  |               |
+| Service Name                 | ``CONSUL_SVC``            | ``consul_svc``             | ``string``  | ``rabbitmq``  |
+| Service Address              | ``CONSUL_SVC_ADDR``       | ``consul_svc_addr``        | ``string``  |               |
+| Service Auto Address         | ``CONSUL_SVC_ADDR_AUTO``  | ``consul_svc_addr_auto``   | ``boolean`` | ``false``     |
 | Service Auto Address by NIC  | ``CONSUL_SVC_ADDR_NIC``   | ``consul_svc_addr_nic``    | ``string``  |               |
-| Service Port          | ``CONSUL_SVC_PORT``       | ``consul_svc_port``        | ``integer`` | ``5672``      |
-| Service TTL           | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
-| Consul Use Longname   | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
-| Consul Domain         | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
+| Service Port                 | ``CONSUL_SVC_PORT``       | ``consul_svc_port``        | ``integer`` | ``5672``      |
+| Service TTL                  | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
+| Consul Use Longname          | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
+| Consul Domain                | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
 
 #### Example rabbitmq.config
+
 ```erlang
 
-[{autocluster,
- [
-  {backend, consul},
+An example that configures an ACL token and contacts a local Consul agent:
+
+[
+  {rabbit,      []},
+  {autocluster, [
+            {backend, consul},
             {consul_host, "localhost"},
             {consul_port, 8500},
             {consul_acl_token, "example-acl-token"},
             {consul_svc, "rabbitmq-test"},
             {cluster_name, "test"}
-            ]}
-                 ].
+  ]}
+].
 ```
 
-#### Example docker compose
+The following example can be used to for a cluster of N nodes, one
+running on a development machine (`my-laptop.local`) and N - 1 running
+in VMs or containers with access to host networking.
 
-The [example](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable/examples/compose_consul_haproxy) shows how to create a dynamic RabbitMQ cluster, using:
-- [Docker compose](https://docs.docker.com/compose/)
-- [Consul](https://www.consul.io) 
-- [HA proxy](https://github.com/docker/dockercloud-haproxy)
+Node names will be `rabbit@my-laptop.local`, `rabbit@vm1.local`,
+and `rabbit@vm2.local`.
+
+``` erlang
+[
+  {rabbit,      []},
+  {autocluster, [
+            {backend, consul},
+            {consul_host, "my-laptop.local"},
+            {consul_port, 8500},
+            {consul_use_longname, true},
+            {consul_svc, "rabbitmq"},
+            {consul_svc_addr_auto, true},
+            {consul_svc_addr_nodename, true}
+  ]}
+].
+```
+
+In the following example, the service address reported to Consul is hardcoded
+to `hostname1.local` instead of being computed automatically from the environment:
+
+``` erlang
+[
+  {rabbit,      []},
+  {autocluster, [
+            {backend, consul},
+            {consul_host, "my-laptop.local"},
+            {consul_port, 8500},
+            {consul_use_longname, true},
+            {consul_svc, "rabbitmq"},
+            {consul_svc_addr_auto, false},
+            {consul_svc_addr, "hostname1.messaging.dev.local"}
+  ]}
+].
+```
+
+#### Example Docker Compose File
+
+The [example](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable/examples/compose_consul_haproxy) demonstrates
+how to create a dynamic RabbitMQ cluster using:
+
+ * [Docker compose](https://docs.docker.com/compose/)
+ * [Consul](https://www.consul.io) 
+ * [HA proxy](https://github.com/docker/dockercloud-haproxy)
 
 ### DNS configuration
 
@@ -398,14 +452,11 @@ The following configuration example enables the DNS based cluster discovery and 
 
 ```erlang
 [
- {rabbit, [
-           {log_levels, [{autocluster, debug}, {connection, debug}]}
-                        ]},
-                         {autocluster, [
-                                        {backend, dns},
-                                                  {autocluster_host, "YOUR_ROUND_ROBIN_A_RECORD"}
-                                                  ]}
-                                                   ].
+  {autocluster, [
+    {backend, dns},
+    {autocluster_host, "YOUR_ROUND_ROBIN_A_RECORD"}
+  ]}
+].
 ```
 
 #### Troubleshooting
@@ -434,125 +485,65 @@ inet,4,
 
 The following settings apply to the [etcd](https://coreos.com/etcd/docs/latest/) backend only:
 
+<dl>
+  <dt>etcd Scheme</dt>
+  <dd>The URI scheme to use when connecting to etcd</dd>
+  <dt>etcd Host</dt>
+  <dd>The hostname to use when connecting to etcd's API</dd>
+  <dt>etcd Port</dt>
+  <dd>The port to connect to when using to etcd's API</dd>
+  <dt>etcd Key Prefix</dt>
+  <dd>The prefix used when storing cluster membership keys in etcd</dd>
+  <dt>etcd Node TTL</dt>
+  <dd>Used to specify how long a node can be down before it is removed from etcd's list of RabbitMQ nodes in the cluster</dd>
+</dl>
+
+| Setting         | Environment Variable | Setting Key     | Type        | Default       |
+|-----------------|----------------------|-----------------|-------------|---------------|
+| etcd Scheme     | ``ETCD_SCHEME``      | ``etcd_scheme`` | ``list``    | ``http``      |
+| etcd Host       | ``ETCD_HOST``        | ``etcd_host``   | ``list``    | ``localhost`` |
+| etcd Port       | ``ETCD_PORT``        | ``etcd_port``   | ``int``     | ``2379``      |
+| etcd Key Prefix | ``ETCD_PREFIX``      | ``etcd_prefix`` | ``list``    | ``rabbitmq``  |
+| etcd Node TTL   | ``ETCD_TTL``         | ``etcd_ttl``    | ``integer`` | ``30``        |
+
 **NOTE** The etcd backend only supports etcd v2.
-
-**etcd URL Scheme**
-
-The URI scheme to use when connecting to etcd
-
-| Environment Variable | ``ETCD_SCHEME``        |
-|----------------------|------------------------|
-| Setting Key          | ``etcd_scheme``        |
-| Data type            | ``list``               |
-| Default Value        | ``http``               |
-
-**etcd Host**
-
-The hostname to use when connecting to etcd's API
-
-| Environment Variable | ``ETCD_HOST``          |
-|----------------------|------------------------|
-| Setting Key          | ``etcd_host``          |
-| Data type            | ``list``               |
-| Default Value        | ``localhost``          |
-
-**etcd Port**
-
-The port to connect to when using to etcd's API
-
-| Environment Variable | ``ETCD_PORT``          |
-|----------------------|------------------------|
-| Setting Key          | ``etcd_port``          |
-| Data type            | ``int``                |
-| Default Value        | ``2379``               |
-
-**etcd Key Prefix**
-
-The prefix used when storing cluster membership keys in etcd
-
-| Environment Variable | ``ETCD_PREFIX``         |
-|----------------------|-------------------------|
-| Setting Key          | ``etcd_prefix``         |
-| Data type            | ``list``                |
-| Default Value        | ``rabbitmq``            |
-
-**etcd Node TTL**
-
-Used to specify how long a node can be down before it is removed from etcd's
-list of RabbitMQ nodes in the cluster
-
-| Environment Variable | ``ETCD_TTL``            |
-|----------------------|-------------------------|
-| Setting Key          | ``etcd_ttl``            |
-| Data type            | ``integer``             |
-| Default Value        | ``30``                  |
 
 ### K8S configuration
 
 The following settings impact the configuration of the [Kubernetes](http://kubernetes.io) backend for the autocluster plugin:
 
-K8S Scheme
-The URI scheme to use when connecting to Kubernetes API server
+<dl>
+  <dt>K8S Scheme</dt>
+  <dd>The URI scheme to use when connecting to Kubernetes API server</dd>
+  <dt>K8S Host</dt>
+  <dd>The hostname of the kubernetes API server</dd>
+  <dt>K8S Port</dt>
+  <dd>The port ot use when connecting to kubernetes API server</dd>
+  <dt>K8S Token Path</dt>
+  <dd>The token path of the Pod's service account</dd>
+  <dt>K8S Cert Path</dt>
+  <dd>The path of the service account authentication certificate with the k8s API server</dd>
+  <dt>K8S Namespace Path</dt>
+  <dd>The path of the service account namespace file</dd>
+  <dt>K8S Service Name</dt>
+  <dd>The rabbitmq service name in Kubernetes</dd>
+  <dt>K8S Adddress Type</dt>
+  <dd>The address type, either ip or hostname</dd>
+  <dt>K8S Hostname Suffix</dt>
+  <dd>The suffix to append to the hostname</dd>
+</dl>
 
-| Environment Variable | ``K8S_SCHEME``         |
-|----------------------|------------------------|
-| Setting Key          | ``k8s_scheme``         |
-| Data type            | ``string``             |
-| Default Value        | ``https``              |
-
-K8S Host
-The hostname of the kubernetes API server
-
-| Environment Variable | ``K8S_HOST``                             |
-|----------------------|------------------------------------------|
-| Setting Key          | ``k8s_host``                             |
-| Data type            | ``string``                               |
-| Default Value        | ``kubernetes.default.svc.cluster.local`` |
-
-K8S Port
-The port ot use when connecting to kubernetes API server
-
-| Environment Variable | ``K8S_PORT``           |
-|----------------------|------------------------|
-| Setting Key          | ``k8s_port``           |
-| Data type            | ``integer``            |
-| Default Value        | ``443``                |
-
-K8S Token Path
-The token path of the Pod's service account
-
-| Environment Variable | ``K8S_TOKEN_PATH``                                      |
-|----------------------|---------------------------------------------------------|
-| Setting Key          | ``k8s_token_path``                                      |
-| Data type            | ``string``                                              |
-| Default Value        | ``/var/run/secrets/kubernetes.io/serviceaccount/token`` |
-
-K8S Cert Path
-The path of the service account authentication certificate with the k8s API server
-
-| Environment Variable | ``K8S_CERT_PATH``                                        |
-|----------------------|----------------------------------------------------------|
-| Setting Key          | ``k8s_cert_path``                                        |
-| Data type            | ``string``                                               |
-| Default Value        | ``/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`` |
-
-K8S Namespace Path
-The path of the service account namespace file
-
-| Environment Variable | ``K8S_NAMESPACE_PATH``                                      |
-|----------------------|-------------------------------------------------------------|
-| Setting Key          | ``k8s_namespace_path``                                      |
-| Data type            | ``string``                                                  |
-| Default Value        | ``/var/run/secrets/kubernetes.io/serviceaccount/namespace`` |
-
-K8S Service Name
-The rabbitmq service name in Kubernetes
-
-| Environment Variable | ``K8S_SERVICE_NAME``   |
-|----------------------|------------------------|
-| Setting Key          | ``k8s_service_name``   |
-| Data type            | ``string``             |
-| Default Value        | ``rabbitmq``           |
+| Setting             | Environment Variable    | Setting Key             | Type        | Default                                                     |
+|---------------------|-------------------------|-------------------------|-------------|-------------------------------------------------------------|
+| K8S Scheme          | ``K8S_SCHEME``          | ``k8s_scheme``          | ``string``  | ``https``                                                   |
+| K8S Host            | ``K8S_HOST``            | ``k8s_host``            | ``string``  | ``kubernetes.default.svc.cluster.local``                    |
+| K8S Port            | ``K8S_PORT``            | ``k8s_port``            | ``integer`` | ``443``                                                     |
+| K8S Token Path      | ``K8S_TOKEN_PATH``      | ``k8s_token_path``      | ``string``  | ``/var/run/secrets/kubernetes.io/serviceaccount/token``     |
+| K8S Cert Path       | ``K8S_CERT_PATH``       | ``k8s_cert_path``       | ``string``  | ``/var/run/secrets/kubernetes.io/serviceaccount/ca.crt``    |
+| K8S Namespace Path  | ``K8S_NAMESPACE_PATH``  | ``k8s_namespace_path``  | ``string``  | ``/var/run/secrets/kubernetes.io/serviceaccount/namespace`` |
+| K8S Service Name    | ``K8S_SERVICE_NAME``    | ``k8s_service_name``    | ``string``  | ``rabbitmq``                                                |
+| K8S Adddress Type   | ``K8S_ADDRESS_TYPE``    | ``k8s_address_type``    | ``string``  | ``ip``                                                      |
+| K8S Hostname Suffix | ``K8S_HOSTNAME_SUFFIX`` | ``k8s_hostname_suffix`` | ``string``  |                                                             |
 
 
 #### Kubernetes Setup

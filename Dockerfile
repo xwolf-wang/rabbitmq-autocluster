@@ -1,7 +1,8 @@
 FROM alpine:3.4
 
 # Version of RabbitMQ to install
-ENV RABBITMQ_VERSION=3.6.6 \
+ENV RABBITMQ_VERSION=3.7.500.15 \
+    MILESTONE=rabbitmq_v3_7_0_milestone15 \
     ERL_EPMD_PORT=4369 \
     HOME=/var/lib/rabbitmq \
     PATH=/usr/lib/rabbitmq/sbin:$PATH \
@@ -20,7 +21,7 @@ RUN \
     coreutils curl xz "su-exec>=0.2" \
     erlang erlang-asn1 erlang-crypto erlang-eldap erlang-erts erlang-inets erlang-mnesia \
     erlang-os-mon erlang-public-key erlang-sasl erlang-ssl erlang-syntax-tools erlang-xmerl && \
-  curl -sL -o /tmp/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz https://www.rabbitmq.com/releases/rabbitmq-server/v${RABBITMQ_VERSION}/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.xz && \
+  curl -sL -o /tmp/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz https://github.com/rabbitmq/rabbitmq-server/releases/download/${MILESTONE}/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.xz && \
   cd /usr/lib/ && \
   tar xf /tmp/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz && \
   rm /tmp/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz && \
@@ -29,7 +30,7 @@ RUN \
 
 COPY root/ /
 ADD  plugins/rabbitmq_aws-*.ez /usr/lib/rabbitmq/plugins/    
-ADD  plugins/autocluster-*.ez /usr/lib/rabbitmq/plugins/
+ADD  plugins/rabbitmq_autocluster-*.ez /usr/lib/rabbitmq/plugins/
 
 # Fetch the external plugins and setup RabbitMQ
 RUN \
@@ -48,7 +49,7 @@ RUN \
     rabbitmq_shovel_management \
     rabbitmq_stomp \
     rabbitmq_web_stomp \
-    autocluster
+    rabbitmq_autocluster
 
 VOLUME $HOME
 EXPOSE 4369 5671 5672 15672 25672

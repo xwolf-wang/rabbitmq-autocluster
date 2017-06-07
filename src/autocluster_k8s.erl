@@ -9,8 +9,10 @@
 
 %% autocluster_backend methods
 -export([nodelist/0,
-  register/0,
-  unregister/0]).
+         lock/1,
+         unlock/1,
+         register/0,
+         unregister/0]).
 
 %% Export all for unit tests
 -ifdef(TEST).
@@ -36,6 +38,14 @@ nodelist() ->
     end.
 
 
+-spec lock(string()) -> not_supported.
+lock(_) ->
+    not_supported.
+
+-spec unlock(term()) -> ok.
+unlock(_) ->
+    ok.
+
 %% @spec register() -> ok|{error, Reason :: string()}
 %% @doc Stub, since this module does not update DNS
 %% @end
@@ -50,11 +60,10 @@ register() -> ok.
 unregister() -> ok.
 
 
-%% @spec make_request() -> Result
-%% @where Result = {ok, mixed}|{error, Reason::string()}
 %% @doc Perform a HTTP GET request to K8s
 %% @end
 %%
+-spec make_request() -> {ok, term()} | {error, term()}.
 make_request() ->
     {ok, Token} = file:read_file(autocluster_config:get(k8s_token_path)),
     Token1 = binary:replace(Token, <<"\n">>, <<>>),
@@ -64,10 +73,11 @@ make_request() ->
       autocluster_config:get(k8s_port),
       base_path(),
       [],
-      [{"Authorization", ["Bearer ", Token1]}],
+      [{"Authorization", "Bearer " ++ binary_to_list(Token1)}],
       [{ssl, [{cacertfile, autocluster_config:get(k8s_cert_path)}]}]).
 
-%% @spec node_name(k8s_endpoint()) -> list()
+
+%% @spec node_name(k8s_endpoint) -> list()  
 %% @doc Return a full rabbit node name, appending hostname suffix
 %% @end
 %%
@@ -75,25 +85,48 @@ node_name(Address) ->
   autocluster_util:node_name(
     autocluster_util:as_string(Address) ++ autocluster_config:get(k8s_hostname_suffix)).
 
-%% @spec extract_node_list(k8s_endpoints()) -> list()
+
+%% @spec maybe_ready_address(k8s_subsets()) -> list()
+%% @doc Return a list of ready nodes
+%% SubSet can contain also "notReadyAddresses"  
+%% @end
+%%
+maybe_ready_address(Subset) ->
+    case  maps:get(<<"notReadyAddresses">>, Subset, undefined) of
+      undefined -> ok;
+      NotReadyAddresses ->
+            Formatted = string:join([binary_to_list(get_address(X))
+                                     || X <- NotReadyAddresses], ", "),
+            autocluster_log:info("k8s endpoint listing returned nodes not yet ready: ~s",
+                                 [Formatted])
+    end,
+    case maps:get(<<"addresses">>, Subset, undefined) of
+      undefined -> [];
+      Address -> Address
+    end.
+
 %% @doc Return a list of nodes
 %%    see http://kubernetes.io/docs/api-reference/v1/definitions/#_v1_endpoints
 %% @end
 %%
+-spec extract_node_list(term()) -> [binary()].
 extract_node_list(Response) ->
-    IpLists = [[maps:get(rabbit_data_coercion:to_binary(autocluster_config:get(k8s_address_type)), Address)
-		||  Address <- maps:get(<<"addresses">>, Subset)]
+    IpLists = [[get_address(Address)
+		||  Address <- maybe_ready_address(Subset)]
 	       || Subset <- maps:get(<<"subsets">>, Response)],
     sets:to_list(sets:union(lists:map(fun sets:from_list/1, IpLists))).
 
 
-%% @spec base_path() -> list()
 %% @doc Return a list of path segments that are the base path for k8s key actions
 %% @end
 %%
+-spec base_path() -> [autocluster_httpc:path_component()].
 base_path() ->
     {ok, NameSpace} = file:read_file(
 			autocluster_config:get(k8s_namespace_path)),
     NameSpace1 = binary:replace(NameSpace, <<"\n">>, <<>>),
     [api, v1, namespaces, NameSpace1, endpoints,
      autocluster_config:get(k8s_service_name)].
+
+get_address(Address) ->
+    maps:get(rabbit_data_coercion:to_binary(autocluster_config:get(k8s_address_type)), Address).
