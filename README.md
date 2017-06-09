@@ -8,7 +8,7 @@ A RabbitMQ plugin that clusters nodes automatically using a number of peer disco
 * [Kubernetes](https://kubernetes.io/)
 * DNS A records,
 * [Consul](https://consul.io),
-* [etcd2](https://github.com/coreos/etcd),
+* [etcd](https://github.com/coreos/etcd),
 
 
 **Note:** This plugin is not a replacement for first-hand knowledge of
@@ -39,7 +39,7 @@ Please take this into account when building this plugin from source.
 
 Please also note that key ideas of this plugin have been incorporated into RabbitMQ master
 branch and will be included into `3.7.0`. This plugin therefore will become a collection
-of backends (e.g. AWS and etcd2) rather than a wholesale alternative cluster formation implementation.
+of backends (e.g. AWS and etcd) rather than a wholesale alternative cluster formation implementation.
 
 
 Supported Erlang Versions
