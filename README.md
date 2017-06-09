@@ -506,7 +506,7 @@ The following settings apply to the [etcd](https://coreos.com/etcd/docs/latest/)
 | etcd Key Prefix | ``ETCD_PREFIX``      | ``etcd_prefix`` | ``list``    | ``rabbitmq``  |
 | etcd Node TTL   | ``ETCD_TTL``         | ``etcd_ttl``    | ``integer`` | ``30``        |
 
-**NOTE** The etcd backend only supports etcd v2.
+**NOTE** The etcd backend supports etcd v2 and v3.
 
 ### K8S configuration
 
