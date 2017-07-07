@@ -15,26 +15,18 @@ $ minikube start --cpus=2 --memory=2040 --vm-driver=virtualbox
 ```
 $ kubectl create namespace test-rabbitmq
 ```
-5. Build the [Docker image](https://github.com/rabbitmq/rabbitmq-autocluster/blob/master/Dockerfile)
-```
-$ git clone https://github.com/rabbitmq/rabbitmq-autocluster.git .
-make dist
-eval $(minikube docker-env)
-docker build  . -t rabbitmq-autocluster
-```
-Wait until the image is created..
 
-6. Deploy the service `YAML` file:
+5. Deploy the service `YAML` file:
 
 ```
 $ kubectl create -f examples/k8s_statefulsets/rabbitmq-service.yaml
 ```
-7. Deploy the RabbitMQ StatefulSet `YAML` file:
+6. Deploy the RabbitMQ StatefulSet `YAML` file:
 
 ```
 $ kubectl create -f examples/k8s_statefulsets/rabbitmq.yaml
 ```
-8. Check the cluster status:
+7. Check the cluster status:
 
 Wait  few seconds....then 
 
@@ -55,19 +47,20 @@ Cluster status of node 'rabbit@172.17.0.2'
           {'rabbit@172.17.0.2',[]}]}]
 ```
 
-9. Get your `minikube` ip:
+8. Get your `minikube` ip:
 ```
 $ minikube ip
 192.168.99.104
 ```
-10. Ports:
+9. Ports:
 	* `http://<<minikube_ip>>:31672` - Management UI
 	* `amqp://guest:guest@<<minikube_ip>>:30672` - AMQP
 
-11. Scaling:
+10. Scaling:
 ```
 $ kubectl scale statefulset/rabbitmq --namespace=test-rabbitmq --replicas=5
 ```
+
 
 
 
