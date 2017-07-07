@@ -32,7 +32,7 @@ spec:
             command: ["rabbitmqctl", "status"]
           initialDelaySeconds: 10
           timeoutSeconds: 5
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         env:
           - name: MY_POD_IP
             valueFrom:

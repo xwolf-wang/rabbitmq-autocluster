@@ -13,8 +13,7 @@ spec:
       containers:
       - name: rabbitmq-autocluster
         image: pivotalrabbitmq/rabbitmq-autocluster
-        # `Never` as we are not using registry in our `minikube` setup
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         env:
           # For consupmption by rabbitmq-env.conf
           - name: MY_POD_IP
