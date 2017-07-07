@@ -77,8 +77,8 @@ Binary Releases
 Binary releases of autocluster can be found on the
 [GitHub Releases](https://github.com/rabbitmq/rabbitmq-autocluster/releases) page.
 
-The most recent release is [0.7.0](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.7.0) that
-targets RabbitMQ `3.6.9` or later.
+The most recent release is [0.8.0](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.8.0) that
+targets RabbitMQ `3.6.10` or later.
 
 Check for version compatibility in [plugin release notes](https://github.com/rabbitmq/rabbitmq-autocluster/releases).
 
@@ -88,11 +88,12 @@ Installation
 
 This plugin is installed the same way as [other RabbitMQ plugins](http://www.rabbitmq.com/plugins.html).
 
-1. Place both ``autocluster-%%VSN%%.ez`` and the ``rabbitmq_aws-%%VSN%%.ez`` plugin files in the RabbitMQ plugins directory.
-2. Run ``rabbitmq-plugins enable autocluster``.
+1. Place both ``autocluster-{version}.ez`` and the ``rabbitmq_aws-{version}.ez`` plugin files in the [RabbitMQ plugins directory](http://www.rabbitmq.com/relocate.html).
+2. Enable the plugin, e.g. with ``rabbitmq-plugins enable autocluster --offline``.
 3. Configure the plugin.
+4. Start the node.
 
-Alternatively, there is a pre-built Docker Image available at on DockerHub as [aweber/rabbitmq-autocluster](https://hub.docker.com/r/aweber/rabbitmq-autocluster/).
+A pre-built [Docker image](https://hub.docker.com/r/gsantomaggio/rabbitmq-autocluster/) with this plugin is available.
 
 **Note**
 As of version ``0.5`` the autocluster plugin does not have a default backend configured. See the [Project Wiki](https://github.com/rabbitmq/rabbitmq-autocluster/wiki) for configuration details.
