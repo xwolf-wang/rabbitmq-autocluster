@@ -39,22 +39,14 @@ kubectl create namespace test-rabbitmq
 kubectl run etcd --image=microbox/etcd --port=4001 --namespace=test-rabbitmq -- --name etcd
 kubectl --namespace=test-rabbitmq expose deployment etcd
 ```
-6. Build a [Docker image](https://github.com/rabbitmq/rabbitmq-autocluster/blob/master/Dockerfile)
-```
-git clone https://github.com/rabbitmq/rabbitmq-autocluster.git rabbitmq-autocluster
-make dist
-eval $(minikube docker-env)
-docker build  . -t rabbitmq-autocluster
-```
-Wait until the image is created..
 
-7.  Deploy the `YAML` file:
+6.  Deploy the `YAML` file:
 
 ```
 kubectl create -f examples/k8s_minikube/rabbitmq.yaml
 ```
 
-8. Check the cluster status:
+7. Check the cluster status:
 Wait  few seconds....then 
 
 ```
@@ -75,7 +67,7 @@ Cluster status of node 'rabbit@172.17.0.9' ...
 ```
 
 
-9. Expose the cluster using a load-balancer:
+8. Expose the cluster using a load-balancer:
 
 ```
 kubectl expose deployment rabbitmq-deployment --port 15672  --type=LoadBalancer  --namespace=test-rabbitmq
@@ -84,12 +76,12 @@ minikube service rabbitmq-deployment --namespace=test-rabbitmq
 
 ```
 
-10. Enable the K8s dashboard (Optional):
+9. Enable the K8s dashboard (Optional):
 ```
 minikube dashboard 
 ```
 
-11. Scale up the RabbitMQ cluster
+10. Scale up the RabbitMQ cluster
 ```
  kubectl scale deployment/rabbitmq-deployment --namespace=test-rabbitmq --replicas=6
 ```

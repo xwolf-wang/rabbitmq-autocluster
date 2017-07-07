@@ -47,16 +47,16 @@ Cluster status of node 'rabbit@172.17.0.2'
           {'rabbit@172.17.0.2',[]}]}]
 ```
 
-9. Get your `minikube` ip:
+8. Get your `minikube` ip:
 ```
 $ minikube ip
 192.168.99.104
 ```
-10. Ports:
+9. Ports:
 	* `http://<<minikube_ip>>:31672` - Management UI
 	* `amqp://guest:guest@<<minikube_ip>>:30672` - AMQP
 
-11. Scaling:
+10. Scaling:
 ```
 $ kubectl scale statefulset/rabbitmq --namespace=test-rabbitmq --replicas=5
 ```
