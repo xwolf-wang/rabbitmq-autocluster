@@ -14,7 +14,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:        
       - name: rabbitmq-autocluster
-        image: rabbitmq-autocluster
+        image: pivotalrabbitmq/rabbitmq-autocluster
         ports:
           - name: http
             protocol: TCP
