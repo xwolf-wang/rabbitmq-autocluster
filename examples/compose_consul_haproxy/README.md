@@ -12,9 +12,6 @@ Dynamic RabbitMQ cluster using:
 Execute
 --
 ```
-git clone https://github.com/rabbitmq/rabbitmq-autocluster.git .
-make dist
-docker build -t rabbitmq/rabbitmq-autocluster .
 cd  examples/compose_consul_haproxy 
 docker-compose up
 docker-compose scale rabbit=3

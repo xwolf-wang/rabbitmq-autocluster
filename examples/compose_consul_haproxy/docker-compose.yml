@@ -12,7 +12,7 @@ services:
       - CONSUL_DEREGISTER_AFTER=60 
     networks:
       - back
-    image: rabbitmq/rabbitmq-autocluster
+    image: pivotalrabbitmq/rabbitmq-autocluster
     expose:
       - 15672
       - 5672

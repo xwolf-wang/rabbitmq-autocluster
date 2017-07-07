@@ -14,7 +14,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:        
       - name: rabbitmq-autocluster
-        image: rabbitmq-autocluster
+        image: pivotalrabbitmq/rabbitmq-autocluster
         ports:
           - name: http
             protocol: TCP
@@ -32,7 +32,7 @@ spec:
             command: ["rabbitmqctl", "status"]
           initialDelaySeconds: 10
           timeoutSeconds: 5
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         env:
           - name: MY_POD_IP
             valueFrom:
