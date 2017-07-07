@@ -92,7 +92,7 @@ This plugin is installed the same way as [other RabbitMQ plugins](http://www.rab
 2. Run ``rabbitmq-plugins enable autocluster``.
 3. Configure the plugin.
 
-Alternatively, there is a pre-built Docker Image available at on DockerHub as [aweber/rabbitmq-autocluster](https://hub.docker.com/r/aweber/rabbitmq-autocluster/).
+Alternatively, there is a pre-built Docker Image available at on DockerHub as [pivotalrabbitmq/rabbitmq-autocluster](https://hub.docker.com/r/pivotalrabbitmq/rabbitmq-autocluster/).
 
 **Note**
 As of version ``0.5`` the autocluster plugin does not have a default backend configured. See the [Project Wiki](https://github.com/rabbitmq/rabbitmq-autocluster/wiki) for configuration details.
