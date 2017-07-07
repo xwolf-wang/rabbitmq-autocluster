@@ -3,12 +3,12 @@ RabbitMQ Autocluster
 
 A RabbitMQ plugin that clusters nodes automatically using a number of peer discovery mechanisms:
 
-* [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html),
-* [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/),
-* [Kubernetes](https://kubernetes.io/)
-* DNS A records,
-* [Consul](https://consul.io),
-* [etcd](https://github.com/coreos/etcd),
+  * [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
+  * [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/)
+  * [Kubernetes](https://kubernetes.io/)
+  * DNS A records
+  * [Consul](https://consul.io)
+  * [etcd](https://github.com/coreos/etcd)
 
 
 **Note:** This plugin is not a replacement for first-hand knowledge of
@@ -58,7 +58,7 @@ Binary releases of autocluster can be found on the
 The most recent release is [0.7.0](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.7.0) that
 targets RabbitMQ `3.6.9` or later.
 
-Check for version compatibility in the release notes.
+Check for version compatibility in [plugin release notes](https://github.com/rabbitmq/rabbitmq-autocluster/releases).
 
 
 Installation
@@ -74,6 +74,39 @@ Alternatively, there is a pre-built Docker Image available at on DockerHub as [a
 
 **Note**
 As of version ``0.5`` the autocluster plugin does not have a default backend configured. See the [Project Wiki](https://github.com/rabbitmq/rabbitmq-autocluster/wiki) for configuration details.
+
+
+What it Does
+------------
+
+This plugin provides a mechanism for peer node discovery in RabbitMQ
+clusters. It also supports a few opinionated features around cluster
+formation and "permanently unavailable" node detection.
+
+Nodes using this plugin will discover its peers on boot and (optionally) register with
+one of the supported backends:
+
+  * [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
+  * [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/)
+  * [Kubernetes](https://kubernetes.io/)
+  * DNS A records
+  * [Consul](https://consul.io)
+  * [etcd](https://github.com/coreos/etcd)
+
+If at least one peer node has been discovered, cluster formation proceeds as usual,
+otherwise the node is considered to be the first one to come up and becomes the seed node.
+
+To avoid a natural race condition around seed node "election" when a newly formed cluster
+first boots, peer discovery backends use either randomized delays or a locking mechanism.
+
+Some backends support node health checks. Nodes not reporting their status periodically
+are considered to be in an errored state. If the user opts in, such nodes can be automatically
+removed from the cluster. This is useful for deployments that use AWS autoscaling groups
+or similar IaaS features, for example.
+
+This plugin only covers cluster formation and does not change how RabbitMQ clusters
+operate once formed.
+
 
 Configuration
 -------------
