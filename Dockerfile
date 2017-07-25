@@ -3,6 +3,7 @@ FROM alpine:3.6
 # Version of RabbitMQ to install
 ENV RABBITMQ_VERSION=3.6.10 \
     ERL_EPMD_PORT=4369 \
+    AUTOCLUSTER_VERSION=0.8.0 \
     HOME=/var/lib/rabbitmq \
     PATH=/usr/lib/rabbitmq/sbin:$PATH \
     RABBITMQ_LOGS=- \
@@ -25,11 +26,11 @@ RUN \
   tar xf /tmp/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz && \
   rm /tmp/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz && \
   mv /usr/lib/rabbitmq_server-${RABBITMQ_VERSION} /usr/lib/rabbitmq && \
+  curl -sL -o /usr/lib/rabbitmq/plugins/autocluster-${AUTOCLUSTER_VERSION}.ez https://github.com/rabbitmq/rabbitmq-autocluster/releases/download/${AUTOCLUSTER_VERSION}/autocluster-${AUTOCLUSTER_VERSION}.ez && \
+  curl -sL -o /usr/lib/rabbitmq/plugins/rabbitmq_aws-${AUTOCLUSTER_VERSION}.ez https://github.com/rabbitmq/rabbitmq-autocluster/releases/download/${AUTOCLUSTER_VERSION}/rabbitmq_aws-${AUTOCLUSTER_VERSION}.ez && \
   apk --purge del curl tar gzip xz
 
 COPY root/ /
-ADD  plugins/rabbitmq_aws-*.ez /usr/lib/rabbitmq/plugins/    
-ADD  plugins/autocluster-*.ez /usr/lib/rabbitmq/plugins/
 
 # Fetch the external plugins and setup RabbitMQ
 RUN \
