@@ -30,6 +30,9 @@
 
 -include("autocluster.hrl").
 
+-define(CREATE_SESSION_RETRY, 10).
+
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Return a list of healthy nodes registered in Consul
@@ -51,6 +54,25 @@ nodelist() ->
   end.
 
 
+%% @doc Tries to create a session.
+%% if there is an Error 500 retries until ?CREATE_SESSION_RETRY
+
+-spec maybe_create_session(string(), pos_integer()) -> {ok,string()} | {error, string()}.
+maybe_create_session(Who, N) when N > 0 ->
+    case create_session(Who, autocluster_config:get(consul_svc_ttl)) of
+        {error, "500"} -> 
+	    autocluster_log:warning("Error 500 while creating a session, " ++
+					" ~p retries left", [N]),
+	    timer:sleep(2000),
+	    maybe_create_session(Who, N -1);
+        Value -> Value
+    end;
+maybe_create_session(_Who, _N) ->
+    lists:flatten(io_lib:format("Error while creating a session,"++ 
+				    "reason: too many 'Error 500' ", [])).
+
+
+
 %% @doc Tries to acquire lock using a separately created session
 %% If locking succeeds, starts periodic action to refresh TTL on
 %% the session. Otherwise watches the key until lock existing lock is
@@ -58,14 +80,15 @@ nodelist() ->
 %% @end.
 -spec lock(string()) -> ok | {error, string()}.
 lock(Who) ->
-    case create_session(Who, autocluster_config:get(consul_svc_ttl)) of
+    case maybe_create_session(Who, ?CREATE_SESSION_RETRY) of
         {ok, SessionId} ->
             start_session_ttl_updater(SessionId),
             Now = time_compat:erlang_system_time(seconds),
             EndTime = Now + autocluster_config:get(lock_wait_time),
             lock(SessionId, Now, EndTime);
+
         {error, Reason} ->
-           lists:flatten(io_lib:format("Error while creating a session, reason: ~s", [Reason]))
+           lists:flatten(io_lib:format("Error while creating a session, reason: ~p", [Reason]))
     end.
 
 
