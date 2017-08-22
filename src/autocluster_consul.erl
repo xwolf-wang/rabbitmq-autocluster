@@ -30,7 +30,7 @@
 
 -include("autocluster.hrl").
 
--define(CREATE_SESSION_RETRY, 10).
+-define(CREATE_SESSION_RETRIES, 10).
 
 
 %%--------------------------------------------------------------------
@@ -55,7 +55,7 @@ nodelist() ->
 
 
 %% @doc Tries to create a session.
-%% if there is an Error 500 retries until ?CREATE_SESSION_RETRY
+%% if there is an Error 500 retries until ?CREATE_SESSION_RETRIES
 
 -spec maybe_create_session(string(), pos_integer()) -> {ok,string()} | {error, string()}.
 maybe_create_session(Who, N) when N > 0 ->
@@ -80,7 +80,7 @@ maybe_create_session(_Who, _N) ->
 %% @end.
 -spec lock(string()) -> ok | {error, string()}.
 lock(Who) ->
-    case maybe_create_session(Who, ?CREATE_SESSION_RETRY) of
+    case maybe_create_session(Who, ?CREATE_SESSION_RETRIES) of
         {ok, SessionId} ->
             start_session_ttl_updater(SessionId),
             Now = time_compat:erlang_system_time(seconds),
