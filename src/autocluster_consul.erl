@@ -61,14 +61,14 @@ nodelist() ->
 maybe_create_session(Who, N) when N > 0 ->
     case create_session(Who, autocluster_config:get(consul_svc_ttl)) of
         {error, "500"} -> 
-	    autocluster_log:warning("Error 500 while creating a session, " ++
+	    autocluster_log:warning("Error 500 while creating a Consul session, " ++
 					" ~p retries left", [N]),
 	    timer:sleep(2000),
 	    maybe_create_session(Who, N -1);
         Value -> Value
     end;
 maybe_create_session(_Who, _N) ->
-    lists:flatten(io_lib:format("Error while creating a session,"++ 
+    lists:flatten(io_lib:format("Error while creating a Consul session,"++
 				    "reason: too many 'Error 500' ", [])).
 
 
@@ -88,7 +88,7 @@ lock(Who) ->
             lock(SessionId, Now, EndTime);
 
         {error, Reason} ->
-           lists:flatten(io_lib:format("Error while creating a session, reason: ~p", [Reason]))
+           lists:flatten(io_lib:format("Error while creating a Consul session, reason: ~p", [Reason]))
     end.
 
 
