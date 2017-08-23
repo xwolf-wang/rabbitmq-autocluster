@@ -102,6 +102,33 @@ as_string_test_() ->
   }.
 
 
+as_list_test_() ->
+  {
+    foreach,
+    fun() ->
+      autocluster_testing:reset(),
+      meck:new(autocluster_log, []),
+      [autocluster_log]
+    end,
+    fun autocluster_testing:on_finish/1,
+    [
+      {"integer", fun() -> ?assertEqual([42], autocluster_util:as_list(42)) end},
+      {"atom", fun() -> ?assertEqual(['42'], autocluster_util:as_list('42')) end},
+      {"binary", fun() -> ?assertEqual([<<"42">>], autocluster_util:as_list(<<"42">>)) end},
+      {"string", fun() -> ?assertEqual(["foo"], autocluster_util:as_list("foo")) end},
+      {"string-list", fun() -> ?assertEqual(["foo", 42, 42.5], autocluster_util:as_list("foo,42,42.5")) end},
+      {"other",
+        fun() ->
+          meck:expect(autocluster_log, error,
+            fun(_Message, Args) -> ?assertEqual([#config{}], Args) end),
+          ?assertEqual(#config{}, autocluster_util:as_list(#config{})),
+          ?assert(meck:validate(autocluster_log))
+        end
+      }
+    ]
+  }.
+
+
 backend_module_test_() ->
   {
     foreach,
