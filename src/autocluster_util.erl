@@ -9,6 +9,7 @@
 -export([as_atom/1,
          as_integer/1,
          as_string/1,
+         as_list/1,
          backend_module/0,
          nic_ipv4/1,
          node_hostname/1,
@@ -90,6 +91,32 @@ as_string(Value) when is_integer(Value) ->
 as_string(Value) when is_list(Value) ->
   lists:flatten(Value);
 as_string(Value) ->
+  autocluster_log:error("Unexpected data type for list value: ~p~n",
+                        [Value]),
+  Value.
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Return the passed in value as a list of strings.
+%% @end
+%%--------------------------------------------------------------------
+-spec as_list(Value :: stringifyable() | list()) -> list().
+as_list([]) -> [];
+as_list(Value) when is_atom(Value) ; is_integer(Value) ; is_binary(Value) ->
+  [Value];
+as_list(Value) when is_list(Value) ->
+  case io_lib:printable_list(Value) or io_lib:printable_unicode_list(Value) of
+    true -> [case string:to_float(S) of
+               {Float, []} -> Float;
+               _ -> case string:to_integer(S) of
+                      {Integer, []} -> Integer;
+                      _ -> string:strip(S)
+                    end
+             end || S <- string:tokens(Value, ",")];
+    false -> Value
+  end;
+as_list(Value) ->
   autocluster_log:error("Unexpected data type for list value: ~p~n",
                         [Value]),
   Value.

@@ -153,6 +153,14 @@ The following settings are available for all service discovery backends:
   <dd>If cluster cleanup is enabled, this is the interval that specifies how often to look for dead nodes to remove (in seconds). <em>Added in v0.5</em></dd>
   <dt>Cleanup Warn Only</dt>
   <dd>If set, the plugin will only warn about nodes that it would cleanup and will not perform any destructive actions on the cluster. <em>Added in v0.5</em></dd>
+  <dt>HTTP Proxy</dt>
+  <dd>If set, the given HTTP URL will be used as a proxy to connect to the service discovery backend.</dd>
+  <dt>HTTPS Proxy</dt>
+  <dd>If set, the given HTTPS URL will be used as a proxy to connect to the service discovery backend.</dd>
+  <dt>Proxy Exclusions</dt>
+  <dd>List of host names which shouldn't use any proxy.</dd>
+  <dd>When using environment variables, the NoProxy list must be provided as a comma separated string: <code>PROXY_EXCLUSIONS="localhost, 127.0.0.1"</code></dd>
+
   <dl/>
 
 #### Settings Details
@@ -336,7 +344,7 @@ packages:
 - docker-engine
 runcmd:
 - docker run -d --name rabbitmq --net=host -p 4369:4369 -p 5672:5672 -p 15672:15672 -p 25672:25672 gavinmroy/rabbitmq-autocluster
-```                                    
+```
 ### Consul configuration
 
 The following settings impact the configuration of the [Consul](http://consul.io) backend for the autocluster plugin:
@@ -452,7 +460,7 @@ The [example](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable/examp
 how to create a dynamic RabbitMQ cluster using:
 
  * [Docker compose](https://docs.docker.com/compose/)
- * [Consul](https://www.consul.io) 
+ * [Consul](https://www.consul.io)
  * [HA proxy](https://github.com/docker/dockercloud-haproxy)
 
 ### DNS configuration
