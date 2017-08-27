@@ -399,7 +399,7 @@ The following settings impact the configuration of the [Consul](http://consul.io
 | Service TTL                  | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
 | Consul Use Longname          | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
 | Consul Domain                | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
-| Include nodes in warn state? | ``CONSUL_INCLUDE_NODES_WITH_WARNINGS`` | ``consul_include_nodes_with_warnings`` | ``boolean`` | ``false`` |
+| Include nodes that fail Consul health checks? | ``CONSUL_INCLUDE_NODES_WITH_WARNINGS`` | ``consul_include_nodes_with_warnings`` | ``boolean`` | ``false`` |
 
 #### Example rabbitmq.config
 
