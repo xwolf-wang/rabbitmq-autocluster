@@ -376,6 +376,11 @@ The following settings impact the configuration of the [Consul](http://consul.io
   <dd>The domain suffix appended to peer node hostname when long node names are used (see above).</dd>
   <dt>Service TTL</dt>
   <dd>Used to specify the Consul health check TTL interval that is used to let Consul know that RabbitMQ is alive an healthy.</dd>
+  <dt>Include nodes that fail Consul health checks?</dt>
+  <dd>
+    If set to `true`, nodes that fail their health checks with Consul will still be included
+    into discovery results.
+  </dd>
 </dl>
 
 #### Configuration Details
@@ -394,6 +399,7 @@ The following settings impact the configuration of the [Consul](http://consul.io
 | Service TTL                  | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
 | Consul Use Longname          | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
 | Consul Domain                | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
+| Include nodes in warn state? | ``CONSUL_INCLUDE_NODES_WITH_WARNINGS`` | ``consul_include_nodes_with_warnings`` | ``boolean`` | ``false`` |
 
 #### Example rabbitmq.config
 
