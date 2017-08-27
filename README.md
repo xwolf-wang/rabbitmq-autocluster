@@ -373,7 +373,7 @@ The following settings impact the configuration of the [Consul](http://consul.io
   <dt>Consul Use Longname</dt>
   <dd>When node names are registered with Consul, instead of FQDN's addresses, this option allows to append <em>.node.<consul_domain></em> to the node names retrieved from Consul.</dd>
   <dt>Consul Domain</dt>
-  <dd>The domain name appended when Consul longnames are used.</dd>
+  <dd>The domain suffix appended to peer node hostname when long node names are used (see above).</dd>
   <dt>Service TTL</dt>
   <dd>Used to specify the Consul health check TTL interval that is used to let Consul know that RabbitMQ is alive an healthy.</dd>
 </dl>
