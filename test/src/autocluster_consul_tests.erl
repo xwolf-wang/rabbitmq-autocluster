@@ -52,7 +52,7 @@ build_registration_body_test_() ->
             [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
               {'TTL','30s'},
               {'Status', 'passing'},
-              {'Deregister_critical_service_after','257s'}]}],
+              {'DeregisterCriticalServiceAfter','257s'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
       end},
       {"with unset deregister and ttl", fun() ->

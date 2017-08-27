@@ -523,7 +523,7 @@ registration_body_maybe_add_deregister(Payload) ->
         -> list().
 registration_body_maybe_add_deregister(Payload, undefined) -> Payload;
 registration_body_maybe_add_deregister(Payload, Deregister_After) ->
-    Deregister = {'Deregister_critical_service_after',
+    Deregister = {'DeregisterCriticalServiceAfter',
         list_to_atom(service_ttl(Deregister_After))},
     Payload ++ [Deregister].
 %%--------------------------------------------------------------------
