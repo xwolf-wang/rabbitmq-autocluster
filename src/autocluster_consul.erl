@@ -506,8 +506,8 @@ registration_body_add_port(Payload) ->
 %%--------------------------------------------------------------------
 
 registration_body_maybe_add_deregister(Payload) ->
-    Deregister = autocluster_config:get(consul_deregister_after),
-    registration_body_maybe_add_deregister(Payload, Deregister).
+    DeregisterAfter = autocluster_config:get(consul_deregister_after),
+    registration_body_maybe_add_deregister(Payload, DeregisterAfter).
 
 
 %%--------------------------------------------------------------------
@@ -524,9 +524,11 @@ registration_body_maybe_add_deregister(Payload) ->
     TTL :: integer() | undefined)
         -> list().
 registration_body_maybe_add_deregister(Payload, undefined) -> Payload;
-registration_body_maybe_add_deregister(Payload, Deregister_After) ->
+registration_body_maybe_add_deregister(Payload, DeregisterAfter) ->
     Deregister = {'DeregisterCriticalServiceAfter',
-        list_to_atom(service_ttl(Deregister_After))},
+        list_to_atom(service_ttl(DeregisterAfter))},
+    autocluster_log:debug("Consul will deregister the service after ~p seconds in critical state~n",
+                          [DeregisterAfter]),
     Payload ++ [Deregister].
 %%--------------------------------------------------------------------
 %% @private

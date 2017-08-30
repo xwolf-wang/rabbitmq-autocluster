@@ -15,7 +15,7 @@ build_registration_body_test_() ->
                        {'Name',rabbitmq},
                        {'Port',5672},
                        {'Check',
-                         [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
+                         [{'Notes','rabbitmq-autocluster node check'},
                           {'TTL','30s'},
                           {'Status', 'passing'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
@@ -27,7 +27,7 @@ build_registration_body_test_() ->
                        {'Address', foo},
                        {'Port',5672},
                        {'Check',
-                        [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
+                        [{'Notes','rabbitmq-autocluster node check'},
                          {'TTL','30s'},
                          {'Status', 'passing'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
@@ -38,7 +38,7 @@ build_registration_body_test_() ->
                        {'Name',rabbitmq},
                        {'Port',5672},
                        {'Check',
-                        [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
+                        [{'Notes','rabbitmq-autocluster node check'},
                          {'TTL','269s'},
                          {'Status', 'passing'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
@@ -49,7 +49,7 @@ build_registration_body_test_() ->
           {'Name',rabbitmq},
           {'Port',5672},
           {'Check',
-            [{'Notes','RabbitMQ Auto-Cluster Plugin TTL Check'},
+            [{'Notes','rabbitmq-autocluster node check'},
               {'TTL','30s'},
               {'Status', 'passing'},
               {'DeregisterCriticalServiceAfter','257s'}]}],
@@ -280,7 +280,7 @@ register_test_() ->
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([], Args),
-              Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
+              Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
@@ -305,7 +305,7 @@ register_test_() ->
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([], Args),
-              Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"},\"Tags\":[\"test-rabbit\"]}">>,
+              Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"},\"Tags\":[\"test-rabbit\"]}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
@@ -321,7 +321,7 @@ register_test_() ->
               ?assertEqual(8501, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([], Args),
-              Expect = <<"{\"ID\":\"rabbit:10.0.0.1\",\"Name\":\"rabbit\",\"Address\":\"10.0.0.1\",\"Port\":5671,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
+              Expect = <<"{\"ID\":\"rabbit:10.0.0.1\",\"Name\":\"rabbit\",\"Address\":\"10.0.0.1\",\"Port\":5671,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
@@ -343,7 +343,7 @@ register_test_() ->
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([{token, "token-value"}], Args),
-              Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
+              Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
@@ -364,7 +364,7 @@ register_test_() ->
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([{token, "token-value"}], Args),
-              Expect = <<"{\"ID\":\"rabbitmq:bob\",\"Name\":\"rabbitmq\",\"Address\":\"bob\",\"Port\":5672,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
+              Expect = <<"{\"ID\":\"rabbitmq:bob\",\"Name\":\"rabbitmq\",\"Address\":\"bob\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
@@ -387,7 +387,7 @@ register_test_() ->
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([{token, "token-value"}], Args),
-              Expect = <<"{\"ID\":\"rabbitmq:bob.consul.node\",\"Name\":\"rabbitmq\",\"Address\":\"bob.consul.node\",\"Port\":5672,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
+              Expect = <<"{\"ID\":\"rabbitmq:bob.consul.node\",\"Name\":\"rabbitmq\",\"Address\":\"bob.consul.node\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
@@ -414,7 +414,7 @@ register_test_() ->
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([{token, "token-value"}], Args),
-              Expect = <<"{\"ID\":\"rabbitmq:172.16.4.50\",\"Name\":\"rabbitmq\",\"Address\":\"172.16.4.50\",\"Port\":5672,\"Check\":{\"Notes\":\"RabbitMQ Auto-Cluster Plugin TTL Check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
+              Expect = <<"{\"ID\":\"rabbitmq:172.16.4.50\",\"Name\":\"rabbitmq\",\"Address\":\"172.16.4.50\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
             end),
