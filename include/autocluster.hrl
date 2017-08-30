@@ -71,7 +71,7 @@
          {config, etcd_prefix,           "ETCD_PREFIX",            "rabbitmq",   string,  false},
          {config, etcd_node_ttl,         "ETCD_NODE_TTL",          30,           integer, false}]).
 
--define(CONSUL_CHECK_NOTES, "RabbitMQ Auto-Cluster Plugin TTL Check").
+-define(CONSUL_CHECK_NOTES, "rabbitmq-autocluster node check").
 
 %%--------------------------------------------------------------------
 %% @doc
