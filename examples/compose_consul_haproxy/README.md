@@ -1,6 +1,4 @@
-RabbitMQ-Autoclsuter Consul example
---
-Dynamic RabbitMQ cluster using:
+This example shows how to create a dynamic RabbitMQ cluster using:
 
 1. [Docker compose](https://docs.docker.com/compose/)
 
@@ -8,17 +6,24 @@ Dynamic RabbitMQ cluster using:
 
 3. [HA proxy](https://github.com/docker/dockercloud-haproxy)
 
+---
 
-Execute
---
+How to run:
+
 ```
-cd  examples/compose_consul_haproxy 
 docker-compose up
+```
+
+How to scale:
+
+```
 docker-compose scale rabbit=3
 ```
 
-Check
---
+
+---
+
+Check running status:
 
 - Consul Management: http://localhost:8500/ui/ 
 - RabbitMQ Management: http://localhost:15672/#/

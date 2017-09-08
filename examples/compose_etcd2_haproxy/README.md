@@ -1,5 +1,5 @@
-This example shows how to create a static RabbitMQ cluster using:
-:
+This example shows how to create a dynamic RabbitMQ cluster using:
+
 
 1. [Docker compose](https://docs.docker.com/compose/) 
 
@@ -7,11 +7,25 @@ This example shows how to create a static RabbitMQ cluster using:
 
 3. [HA proxy](https://github.com/docker/dockercloud-haproxy)
 
+---
+
+You can customize the `rabbitmq.config` inside `conf/rabbitmq.config`
+
+
+How to run:
 ```
-git clone https://github.com/Gsantomaggio/rabbitmqexample.git .
-cd cluster_docker_compose/etcd2_ha
 docker-compose up
+```
+
+How to scale:
+
+```
 docker-compose scale rabbit=3
 ```
 
-You can customize the `rabbitmq.config` inside `conf/rabbitmq.config`
+---
+
+Check running status:
+
+- RabbitMQ Management: http://localhost:15672/#/
+
