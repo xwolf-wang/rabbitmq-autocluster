@@ -1,0 +1,66 @@
+version: "2"
+services:
+  etcd0:
+    image: quay.io/coreos/etcd:v2.1.1
+    networks:
+      - back
+    ports:
+     - "4001:4001"
+     - 2380
+     - 2379
+    command:
+      - --name=etcd0
+      - --initial-cluster-token=etcd-cluster-1
+      - --initial-cluster=etcd0=http://etcd0:2380
+      - --initial-cluster-state=new
+      - --initial-advertise-peer-urls=http://etcd0:2380
+      - --listen-client-urls=http://0.0.0.0:2379,http://0.0.0.0:4001
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --advertise-client-urls=http://etcd0:2379  
+  rabbit_node_1:
+    environment:
+      - RABBITMQ_ERLANG_COOKIE='secret_cookie'
+      - AUTOCLUSTER_TYPE=etcd
+      - AUTOCLUSTER_DELAY=10
+      - ETCD_HOST=etcd0
+    networks:
+      - back
+    depends_on:
+      - etcd0
+    hostname: rabbit_node_1
+    image: pivotalrabbitmq/rabbitmq-autocluster
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    tty: true
+    volumes:
+      - rabbit1:/var/lib/rabbitmq
+      - ./conf/:/etc/rabbitmq/
+  rabbit_node_2:
+    environment:
+      - RABBITMQ_ERLANG_COOKIE='secret_cookie'
+      - AUTOCLUSTER_TYPE=etcd
+      - AUTOCLUSTER_DELAY=40
+      - ETCD_HOST=etcd0
+    networks:
+      - back
+    hostname: rabbit_node_2
+    image: pivotalrabbitmq/rabbitmq-autocluster
+    depends_on:
+      - rabbit_node_1
+      - etcd0
+    ports:
+      - "15673:15672"
+      - "5673:5672"
+    tty: true
+    volumes:
+      - rabbit2:/var/lib/rabbitmq
+      - ./conf/:/etc/rabbitmq/
+volumes:
+  rabbit1:
+    driver: local
+  rabbit2:
+    driver: local
+
+networks:
+  back:
