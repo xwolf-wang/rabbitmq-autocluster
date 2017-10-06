@@ -376,8 +376,10 @@ The following settings impact the configuration of the [Consul](http://consul.io
   <dd>The domain suffix appended to peer node hostname when long node names are used (see above).</dd>
   <dt>Service TTL</dt>
   <dd>Used to specify the Consul <a href="https://www.consul.io/docs/agent/checks.html">health check</a> interval that is used to let Consul know that RabbitMQ is alive an healthy.</dd>
+  <dt>Service Tags</dt>
+  <dd>Used to specify the Consul <a href="https://www.consul.io/api/agent/service.html#tags">service tags</a>. If a cluster name is specified, the tags specified here are added to the cluster name tag</dd>
   <dt>Service unregistration timeout</dt>
-  <dd>How soon should Consul unregister a node that's failing its health check? The value is in second and cannot be lower than 60.</dd>  
+  <dd>How soon should Consul unregister a node that's failing its health check? The value is in second and cannot be lower than 60.</dd>
   <dt>Include nodes that fail Consul health checks?</dt>
   <dd>
     If set to `true`, nodes that fail their health checks with Consul will still be included
@@ -399,6 +401,7 @@ The following settings impact the configuration of the [Consul](http://consul.io
 | Service Auto Address by NIC  | ``CONSUL_SVC_ADDR_NIC``   | ``consul_svc_addr_nic``    | ``string``  |               |
 | Service Port                 | ``CONSUL_SVC_PORT``       | ``consul_svc_port``        | ``integer`` | ``5672``      |
 | Service TTL                  | ``CONSUL_SVC_TTL``        | ``consul_svc_ttl``         | ``integer`` | ``30``        |
+| Service Tags                 | ``CONSUL_SVC_TAGS``       | ``consul_svc_tags``        | ``list``    | ``[]``        |
 | Service unregistration timeout | ``CONSUL_DEREGISTER_AFTER`` | ``consul_deregister_after`` | ``integer`` | ``60``     |
 | Consul Use Longname          | ``CONSUL_USE_LONGNAME``   | ``consul_use_longname``    | ``boolean`` | ``false``     |
 | Consul Domain                | ``CONSUL_DOMAIN``         | ``consul_domain``          | ``string``  | ``consul``    |
