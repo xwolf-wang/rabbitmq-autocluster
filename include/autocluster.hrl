@@ -46,6 +46,7 @@
          {config, consul_svc_addr_nodename,   "CONSUL_SVC_ADDR_NODENAME",    false,  atom,  false},
          {config, consul_svc_port,       "CONSUL_SVC_PORT",        5672,         integer, true},
          {config, consul_svc_ttl,        "CONSUL_SVC_TTL",         30,           integer, false},
+         {config, consul_svc_tags,       "CONSUL_SVC_TAGS",        [],           list, false},
          {config, consul_deregister_after, "CONSUL_DEREGISTER_AFTER", "",        integer,    false}, %% consul deregister_critical_service_after
          {config, consul_use_longname,   "CONSUL_USE_LONGNAME",    false,        atom,    false},
 
