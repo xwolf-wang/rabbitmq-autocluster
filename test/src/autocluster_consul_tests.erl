@@ -32,6 +32,56 @@ build_registration_body_test_() ->
                          {'Status', 'passing'}]}],
         ?assertEqual(Expectation, autocluster_consul:build_registration_body())
        end},
+      {"with tag set", fun() ->
+        os:putenv("CONSUL_SVC_TAGS", "urlprefix-:5672 proto=tcp"),
+        Expectation = [{'ID','rabbitmq'},
+                       {'Name',rabbitmq},
+                       {'Port',5672},
+                       {'Check',
+                        [{'Notes','rabbitmq-autocluster node check'},
+                         {'TTL','30s'},
+                         {'Status', 'passing'}]},
+                       {'Tags',['urlprefix-:5672 proto=tcp']}],
+        ?assertEqual(Expectation, autocluster_consul:build_registration_body())
+       end},
+      {"with tags set", fun() ->
+        os:putenv("CONSUL_SVC_TAGS", "urlprefix-:5672 proto=tcp, mq, mq server"),
+        Expectation = [{'ID','rabbitmq'},
+                       {'Name',rabbitmq},
+                       {'Port',5672},
+                       {'Check',
+                        [{'Notes','rabbitmq-autocluster node check'},
+                         {'TTL','30s'},
+                         {'Status', 'passing'}]},
+                       {'Tags',['urlprefix-:5672 proto=tcp',mq,'mq server']}],
+        ?assertEqual(Expectation, autocluster_consul:build_registration_body())
+       end},
+      {"with tag and cluster name set", fun() ->
+        os:putenv("CLUSTER_NAME", "baruwa"),
+        os:putenv("CONSUL_SVC_TAGS", "urlprefix-:5672 proto=tcp"),
+        Expectation = [{'ID','rabbitmq'},
+                       {'Name',rabbitmq},
+                       {'Port',5672},
+                       {'Check',
+                        [{'Notes','rabbitmq-autocluster node check'},
+                         {'TTL','30s'},
+                         {'Status', 'passing'}]},
+                       {'Tags',['baruwa','urlprefix-:5672 proto=tcp']}],
+        ?assertEqual(Expectation, autocluster_consul:build_registration_body())
+       end},
+      {"with tags and cluster name set", fun() ->
+        os:putenv("CLUSTER_NAME", "baruwa"),
+        os:putenv("CONSUL_SVC_TAGS", "urlprefix-:5672 proto=tcp, mq, mq server"),
+        Expectation = [{'ID','rabbitmq'},
+                       {'Name',rabbitmq},
+                       {'Port',5672},
+                       {'Check',
+                        [{'Notes','rabbitmq-autocluster node check'},
+                         {'TTL','30s'},
+                         {'Status', 'passing'}]},
+                       {'Tags',['baruwa','urlprefix-:5672 proto=tcp',mq,'mq server']}],
+        ?assertEqual(Expectation, autocluster_consul:build_registration_body())
+       end},
       {"with ttl set", fun() ->
         os:putenv("CONSUL_SVC_TTL", "269"),
         Expectation = [{'ID','rabbitmq'},

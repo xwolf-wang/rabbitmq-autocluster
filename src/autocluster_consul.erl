@@ -540,7 +540,8 @@ registration_body_maybe_add_deregister(Payload, DeregisterAfter) ->
 -spec registration_body_maybe_add_tag(Payload :: list()) -> list().
 registration_body_maybe_add_tag(Payload) ->
   Value = autocluster_config:get(cluster_name),
-  registration_body_maybe_add_tag(Payload, Value).
+  Tags = autocluster_config:get(consul_svc_tags),
+  registration_body_maybe_add_tag(Payload, Value, Tags).
 
 
 %%--------------------------------------------------------------------
@@ -548,14 +549,20 @@ registration_body_maybe_add_tag(Payload) ->
 %% @doc
 %% Check the configured value for the Cluster name, adding it as a
 %% tag if set.
+%% Also add the tags set in CONSUL_SVC_TAGS is set.
 %% @end
 %%--------------------------------------------------------------------
 -spec registration_body_maybe_add_tag(Payload :: list(),
-                                      ClusterName :: string())
+                                      ClusterName :: string(),
+                                      Tags :: list())
     -> list().
-registration_body_maybe_add_tag(Payload, "undefined") -> Payload;
-registration_body_maybe_add_tag(Payload, Cluster) ->
-  lists:append(Payload, [{'Tags', [list_to_atom(Cluster)]}]).
+registration_body_maybe_add_tag(Payload, "undefined", []) -> Payload;
+registration_body_maybe_add_tag(Payload, "undefined", Tags) ->
+  lists:append(Payload, [{'Tags', [list_to_atom(X) || X <- Tags]}]);
+registration_body_maybe_add_tag(Payload, Cluster, []) ->
+  lists:append(Payload, [{'Tags', [list_to_atom(Cluster)]}]);
+registration_body_maybe_add_tag(Payload, Cluster, Tags) ->
+  lists:append(Payload, [{'Tags', [list_to_atom(Cluster)] ++ [list_to_atom(X) || X <- Tags]}]).
 
 
 %%--------------------------------------------------------------------

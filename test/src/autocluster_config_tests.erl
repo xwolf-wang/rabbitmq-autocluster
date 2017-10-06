@@ -59,6 +59,13 @@ app_envvar_test_() ->
           application:set_env(autocluster, proxy_exclusions, "foo,42,42.5"),
           ?assertEqual(["foo", 42, 42.5], autocluster_config:get(proxy_exclusions))
         end
+      },
+      {
+        "consul tags",
+        fun() ->
+          application:set_env(autocluster, consul_svc_tags, "urlprefix-:5672 proto=tcp, mq, mq server"),
+          ?assertEqual(["urlprefix-:5672 proto=tcp","mq","mq server"], autocluster_config:get(consul_svc_tags))
+        end
       }
     ]
   }.
@@ -120,6 +127,19 @@ os_envvar_test_() ->
         fun() ->
           os:putenv("PROXY_EXCLUSIONS", "foo,42,42.5"),
           ?assertEqual(["foo", 42, 42.5], autocluster_config:get(proxy_exclusions))
+        end
+      },
+      {
+        "consul tags set",
+        fun() ->
+          os:putenv("CONSUL_SVC_TAGS", "urlprefix-:5672 proto=tcp, mq, mq server"),
+          ?assertEqual(["urlprefix-:5672 proto=tcp","mq","mq server"], autocluster_config:get(consul_svc_tags))
+        end
+      },
+      {
+        "consul tags unset",
+        fun() ->
+          ?assertEqual([], autocluster_config:get(consul_svc_tags))
         end
       }
     ]
