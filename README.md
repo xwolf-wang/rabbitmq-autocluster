@@ -8,10 +8,20 @@ This plugin provides a mechanism for peer node discovery in RabbitMQ
 clusters. It also supports a few opinionated features around cluster
 formation and "permanently unavailable" node detection.
 
+Note for RabbitMQ 3.7.x Users
+-----------------------------
+
+Starting with RabbitMQ 3.7.0 (including previews and recent [snapshot builds](http://www.rabbitmq.com/snapshots.html)),
+this plugin was superseded by a [new peer discovery subsystem](http://next.rabbitmq.com/cluster-formation.html)
+built on the same ideas and supporting the same backends as separate plugins.
+
+Supported Discovery Backends
+----------------------------
+
 Nodes using this plugin will discover its peers on boot and (optionally) register with
 one of the supported backends:
 
-  * [AWS EC2 tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
+  * [AWS EC2 instance tags](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
   * [AWS Autoscaling Groups](https://aws.amazon.com/autoscaling/)
   * [Kubernetes](https://kubernetes.io/)
   * DNS A records
@@ -55,7 +65,9 @@ There are two branches in this repository that target different RabbitMQ
 release series:
 
 * [stable](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable) targets RabbitMQ ``3.6.x`` (current ``stable`` RabbitMQ branch)
-* [master](https://github.com/rabbitmq/rabbitmq-autocluster/tree/master) targets RabbitMQ ``3.7.x`` (current ``master`` RabbitMQ branch).
+* [master](https://github.com/rabbitmq/rabbitmq-autocluster/tree/master) is compatible with RabbitMQ ``3.7.x`` (current ``master`` RabbitMQ branch)
+  but this plugin was superseded by a [new peer discovery subsystem](http://next.rabbitmq.com/cluster-formation.html) built on the
+  same ideas.
 
 Please take this into account when building this plugin from source.
 
