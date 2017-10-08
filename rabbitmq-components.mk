@@ -63,7 +63,7 @@ dep_rabbitmq_java_client              = git_rmq rabbitmq-java-client $(current_r
 dep_rabbitmq_jms_client               = git_rmq rabbitmq-jms-client $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_jms_cts                  = git_rmq rabbitmq-jms-cts $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_jms_topic_exchange       = git_rmq rabbitmq-jms-topic-exchange $(current_rmq_ref) $(base_rmq_ref) master
-dep_rabbitmq_lvc                      = git_rmq rabbitmq-lvc-plugin $(current_rmq_ref) $(base_rmq_ref) master
+dep_rabbitmq_lvc_exchange             = git_rmq rabbitmq-lvc-exchange $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_management               = git_rmq rabbitmq-management $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_management_agent         = git_rmq rabbitmq-management-agent $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_management_exchange      = git_rmq rabbitmq-management-exchange $(current_rmq_ref) $(base_rmq_ref) master
@@ -76,6 +76,8 @@ dep_rabbitmq_objc_client              = git_rmq rabbitmq-objc-client $(current_r
 dep_rabbitmq_peer_discovery_aws       = git_rmq rabbitmq-peer-discovery-aws $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_peer_discovery_common    = git_rmq rabbitmq-peer-discovery-common $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_peer_discovery_consul    = git_rmq rabbitmq-peer-discovery-consul $(current_rmq_ref) $(base_rmq_ref) master
+dep_rabbitmq_peer_discovery_etcd      = git_rmq rabbitmq-peer-discovery-etcd $(current_rmq_ref) $(base_rmq_ref) master
+dep_rabbitmq_peer_discovery_k8s       = git_rmq rabbitmq-peer-discovery-k8s $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_recent_history_exchange  = git_rmq rabbitmq-recent-history-exchange $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_routing_node_stamp       = git_rmq rabbitmq-routing-node-stamp $(current_rmq_ref) $(base_rmq_ref) master
 dep_rabbitmq_rtopic_exchange          = git_rmq rabbitmq-rtopic-exchange $(current_rmq_ref) $(base_rmq_ref) master
@@ -105,12 +107,15 @@ dep_rabbitmq_public_umbrella          = git_rmq rabbitmq-public-umbrella $(curre
 # all projects use the same versions. It avoids conflicts and makes it
 # possible to work with rabbitmq-public-umbrella.
 
-dep_cowboy_commit = 1.1.0
+dep_cowboy_commit = 1.1.2
+dep_jsx_commit = 2.8.2
+dep_lager_commit = 3.5.1
 dep_mochiweb = git git://github.com/basho/mochiweb.git v2.9.0p2
 dep_ranch_commit = 1.3.2
 dep_sockjs = git https://github.com/rabbitmq/sockjs-erlang.git 405990ea62353d98d36dbf5e1e64942d9b0a1daf
 dep_webmachine_commit = 1.10.8p2
-dep_ranch_proxy_protocol = git git://github.com/heroku/ranch_proxy_protocol.git 1.4.2
+dep_ranch_proxy_protocol_commit = 1.4.2
+dep_ranch_proxy_protocol = git git://github.com/heroku/ranch_proxy_protocol.git $(dep_ranch_proxy_protocol_commit)
 
 RABBITMQ_COMPONENTS = amqp_client \
 		      rabbit \
@@ -138,7 +143,7 @@ RABBITMQ_COMPONENTS = amqp_client \
 		      rabbitmq_jms_client \
 		      rabbitmq_jms_cts \
 		      rabbitmq_jms_topic_exchange \
-		      rabbitmq_lvc \
+		      rabbitmq_lvc_exchange \
 		      rabbitmq_management \
 		      rabbitmq_management_agent \
 		      rabbitmq_management_exchange \
@@ -151,6 +156,8 @@ RABBITMQ_COMPONENTS = amqp_client \
 		      rabbitmq_peer_discovery_aws \
 		      rabbitmq_peer_discovery_common \
 		      rabbitmq_peer_discovery_consul \
+		      rabbitmq_peer_discovery_etcd \
+		      rabbitmq_peer_discovery_k8s \
 		      rabbitmq_recent_history_exchange \
 		      rabbitmq_routing_node_stamp \
 		      rabbitmq_rtopic_exchange \
@@ -178,7 +185,7 @@ NO_AUTOPATCH += $(RABBITMQ_COMPONENTS)
 ifeq ($(origin current_rmq_ref),undefined)
 ifneq ($(wildcard .git),)
 current_rmq_ref := $(shell (\
-	ref=$$(git branch --list | awk '/^\* \(.*detached / {ref=$$0; sub(/.*detached [^ ]+ /, "", ref); sub(/\)$$/, "", ref); print ref; exit;} /^\* / {ref=$$0; sub(/^\* /, "", ref); print ref; exit}');\
+	ref=$$(LANG=C git branch --list | awk '/^\* \(.*detached / {ref=$$0; sub(/.*detached [^ ]+ /, "", ref); sub(/\)$$/, "", ref); print ref; exit;} /^\* / {ref=$$0; sub(/^\* /, "", ref); print ref; exit}');\
 	if test "$$(git rev-parse --short HEAD)" != "$$ref"; then echo "$$ref"; fi))
 else
 current_rmq_ref := master
