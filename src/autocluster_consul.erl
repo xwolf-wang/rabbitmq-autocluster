@@ -183,7 +183,7 @@ send_health_check_pass() ->
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
                              [v1, agent, check, pass, Service],
-                             maybe_add_acl([])) of
+                             maybe_add_acl([]), "") of
     {ok, []} -> ok;
     {error, "500"} ->
           maybe_re_register(wait_nodelist());
@@ -234,7 +234,7 @@ unregister() ->
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
                              [v1, agent, service, deregister, Service],
-                             maybe_add_acl([])) of
+                             maybe_add_acl([]), "") of
     {ok, _} -> ok;
     Error   -> Error
   end.
