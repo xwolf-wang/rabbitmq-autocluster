@@ -60,7 +60,7 @@ nodelist() ->
 -spec maybe_create_session(string(), pos_integer()) -> {ok,string()} | {error, string()}.
 maybe_create_session(Who, N) when N > 0 ->
     case create_session(Who, autocluster_config:get(consul_svc_ttl)) of
-        {error, "500"} -> 
+        {error, "500"} ->
 	    autocluster_log:warning("Error 500 while creating a Consul session, " ++
 					" ~p retries left", [N]),
 	    timer:sleep(2000),
@@ -119,7 +119,7 @@ unlock(SessionId) ->
 register() ->
   case registration_body() of
     {ok, Body} ->
-      case autocluster_httpc:post(autocluster_config:get(consul_scheme),
+      case autocluster_httpc:put(autocluster_config:get(consul_scheme),
                                   autocluster_config:get(consul_host),
                                   autocluster_config:get(consul_port),
                                   [v1, agent, service, register],
@@ -179,11 +179,11 @@ lock(SessionId, _, EndTime) ->
 -spec send_health_check_pass() -> ok.
 send_health_check_pass() ->
   Service = string:join(["service", service_id()], ":"),
-  case autocluster_httpc:get(autocluster_config:get(consul_scheme),
+  case autocluster_httpc:put(autocluster_config:get(consul_scheme),
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
                              [v1, agent, check, pass, Service],
-                             maybe_add_acl([])) of
+                             maybe_add_acl([]), "") of
     {ok, []} -> ok;
     {error, "500"} ->
           maybe_re_register(wait_nodelist());
@@ -230,11 +230,11 @@ wait_nodelist(N) ->
 -spec unregister() -> ok | {error, Reason :: string()}.
 unregister() ->
   Service = service_id(),
-  case autocluster_httpc:get(autocluster_config:get(consul_scheme),
+  case autocluster_httpc:put(autocluster_config:get(consul_scheme),
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
                              [v1, agent, service, deregister, Service],
-                             maybe_add_acl([])) of
+                             maybe_add_acl([]), "") of
     {ok, _} -> ok;
     Error   -> Error
   end.
