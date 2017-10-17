@@ -323,7 +323,7 @@ register_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_log, debug, fun(_Message) -> ok end),
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
@@ -348,7 +348,7 @@ register_test_() ->
         end},
       {"with cluster name",
         fun() ->
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
@@ -364,7 +364,7 @@ register_test_() ->
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"without token",  fun() ->
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("https", Scheme),
               ?assertEqual("consul.service.consul", Host),
@@ -386,7 +386,7 @@ register_test_() ->
         end},
       {"with token",
         fun() ->
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
@@ -407,7 +407,7 @@ register_test_() ->
         fun() ->
           meck:expect(autocluster_util, node_hostname, fun(true) -> "bob.consul.node";
                                                           (false) -> "bob" end),
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
@@ -430,7 +430,7 @@ register_test_() ->
         fun() ->
           meck:expect(autocluster_util, node_hostname, fun(true) -> "bob.consul.node";
                                                           (false) -> "bob" end),
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
@@ -457,7 +457,7 @@ register_test_() ->
               ?assertEqual("en0", NIC),
               {ok, "172.16.4.50"}
             end),
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
@@ -481,7 +481,7 @@ register_test_() ->
         meck:expect(timer, apply_interval, fun(_, _, _, _) ->
           {error, "should not be called"}
          end),
-        meck:expect(autocluster_httpc, post, fun (_, _, _, _, _, _) -> {ok, []} end),
+        meck:expect(autocluster_httpc, put, fun (_, _, _, _, _, _) -> {ok, []} end),
         os:putenv("CONSUL_SVC_TTL", ""),
         ?assertEqual(ok, autocluster_consul:register()),
         ?assert(meck:validate(timer))
@@ -498,7 +498,7 @@ register_failure_test_() ->
       {"on error",
         fun() ->
           meck:new(autocluster_httpc),
-          meck:expect(autocluster_httpc, post,
+          meck:expect(autocluster_httpc, put,
             fun(_Scheme, _Host, _Port, _Path, _Args, _body) ->
               {error, "testing"}
             end),
@@ -535,13 +535,14 @@ send_health_check_pass_test_() ->
     [
       {"default values",
         fun() ->
-          meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, check, pass, "service:rabbitmq"], Path),
               ?assertEqual([], Args),
+              ?assertEqual("", Body),
               {ok, []}
             end),
           ?assertEqual(ok, autocluster_consul:send_health_check_pass()),
@@ -549,13 +550,14 @@ send_health_check_pass_test_() ->
         end},
       {"without token",
         fun() ->
-          meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Body) ->
               ?assertEqual("https", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, agent, check, pass, "service:rabbit"], Path),
               ?assertEqual([], Args),
+              ?assertEqual("", Body),
               {ok, []}
             end),
           os:putenv("CONSUL_SCHEME", "https"),
@@ -566,13 +568,14 @@ send_health_check_pass_test_() ->
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"with token", fun() ->
-        meck:expect(autocluster_httpc, get,
-          fun(Scheme, Host, Port, Path, Args) ->
+        meck:expect(autocluster_httpc, put,
+          fun(Scheme, Host, Port, Path, Args, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, agent, check, pass, "service:rabbitmq"], Path),
             ?assertEqual([{token, "token-value"}], Args),
+            ?assertEqual("", Body),
             {ok, []}
           end),
         os:putenv("CONSUL_HOST", "consul.service.consul"),
@@ -585,8 +588,8 @@ send_health_check_pass_test_() ->
         meck:expect(autocluster_log, error, fun(_Message, _Args) ->
           ok
           end),
-        meck:expect(autocluster_httpc, get,
-          fun(_Scheme, _Host, _Port, _Path, _Args) ->
+        meck:expect(autocluster_httpc, put,
+          fun(_Scheme, _Host, _Port, _Path, _Args, _Body) ->
             {error, "testing"}
           end),
         ?assertEqual(ok, autocluster_consul:send_health_check_pass()),
@@ -608,26 +611,28 @@ unregister_test_() ->
     fun autocluster_testing:on_finish/1,
     [
       {"default values", fun() ->
-        meck:expect(autocluster_httpc, get,
-          fun(Scheme, Host, Port, Path, Args) ->
+        meck:expect(autocluster_httpc, put,
+          fun(Scheme, Host, Port, Path, Args, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("localhost", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, agent, service, deregister, "rabbitmq"], Path),
             ?assertEqual([], Args),
+            ?assertEqual("", Body),
             {ok, []}
           end),
         ?assertEqual(ok, autocluster_consul:unregister()),
         ?assert(meck:validate(autocluster_httpc))
                          end},
       {"without token", fun() ->
-        meck:expect(autocluster_httpc, get,
-          fun(Scheme, Host, Port, Path, Args) ->
+        meck:expect(autocluster_httpc, put,
+          fun(Scheme, Host, Port, Path, Args, Body) ->
             ?assertEqual("https", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8501, Port),
             ?assertEqual([v1, agent, service, deregister,"rabbit:10.0.0.1"], Path),
             ?assertEqual([], Args),
+            ?assertEqual("", Body),
             {ok, []}
           end),
         os:putenv("CONSUL_SCHEME", "https"),
@@ -640,13 +645,14 @@ unregister_test_() ->
         ?assert(meck:validate(autocluster_httpc))
        end},
       {"with token", fun() ->
-        meck:expect(autocluster_httpc, get,
-          fun(Scheme, Host, Port, Path, Args) ->
+        meck:expect(autocluster_httpc, put,
+          fun(Scheme, Host, Port, Path, Args, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, agent, service, deregister,"rabbitmq"], Path),
             ?assertEqual([{token, "token-value"}], Args),
+            ?assertEqual("", Body),
             {ok, []}
           end),
         os:putenv("CONSUL_HOST", "consul.service.consul"),
@@ -656,8 +662,8 @@ unregister_test_() ->
         ?assert(meck:validate(autocluster_httpc))
        end},
       {"on error", fun() ->
-        meck:expect(autocluster_httpc, get,
-          fun(_Scheme, _Host, _Port, _Path, _Args) ->
+        meck:expect(autocluster_httpc, put,
+          fun(_Scheme, _Host, _Port, _Path, _Args, _Body) ->
             {error, "testing"}
           end),
         ?assertEqual({error, "testing"}, autocluster_consul:unregister()),
