@@ -13,7 +13,8 @@
          get/5,
          get/7,
          post/6,
-         put/6]).
+         put/6,
+         put/7]).
 
 %% Export all for unit tests
 -ifdef(TEST).
@@ -167,6 +168,27 @@ put(Scheme, Host, Port, Path, Args, Body) ->
   URL = build_uri(Scheme, Host, Port, Path, Args),
   autocluster_log:debug("PUT ~s [~p]", [URL, Body]),
   Response = httpc:request(put, {URL, [], ?CONTENT_URLENCODED, Body}, [], []),
+  autocluster_log:debug("Response: [~p]", [Response]),
+  parse_response(Response).
+
+
+%% @public
+%% @spec put(Scheme, Host, Port, Path, Args, Headers, Body) -> Result
+%% @where Scheme  = string(),
+%%        Host    = string(),
+%%        Port    = integer(),
+%%        Path    = string(),
+%%        Args    = proplist(),
+%%        Headers = proplist(),
+%%        Body    = string(),
+%%        Result  = {ok, mixed}|{error, Reason::string()}
+%% @doc Perform a HTTP PUT request
+%% @end
+%%
+put(Scheme, Host, Port, Path, Args, Headers, Body) ->
+  URL = build_uri(Scheme, Host, Port, Path, Args),
+  autocluster_log:debug("PUT ~s [~p] [~p]", [URL, Headers, Body]),
+  Response = httpc:request(put, {URL, Headers, ?CONTENT_URLENCODED, Body}, [], []),
   autocluster_log:debug("Response: [~p]", [Response]),
   parse_response(Response).
 
