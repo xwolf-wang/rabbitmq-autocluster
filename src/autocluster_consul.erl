@@ -45,7 +45,9 @@ nodelist() ->
                              autocluster_config:get(consul_port),
                              [v1, health, service,
                               autocluster_config:get(consul_svc)],
-                             node_list_qargs()) of
+                             node_list_qargs(),
+                             maybe_add_acl([]),
+                             []) of
     {ok, Nodes} ->
       Result = extract_nodes(
              filter_nodes(Nodes,
@@ -125,7 +127,9 @@ register() ->
                                   autocluster_config:get(consul_host),
                                   autocluster_config:get(consul_port),
                                   [v1, agent, service, register],
-                                  maybe_add_acl([]), Body) of
+                                  [],
+                                  maybe_add_acl([]),
+                                  Body) of
         {ok, _} ->
               case autocluster_config:get(consul_svc_ttl) of
                   undefined -> ok;
@@ -185,7 +189,9 @@ send_health_check_pass() ->
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
                              [v1, agent, check, pass, Service],
-                             maybe_add_acl([]), "") of
+                             [],
+                             maybe_add_acl([]),
+                             "") of
     {ok, []} -> ok;
     {error, "500"} ->
           maybe_re_register(wait_nodelist());
@@ -236,7 +242,9 @@ unregister() ->
                              autocluster_config:get(consul_host),
                              autocluster_config:get(consul_port),
                              [v1, agent, service, deregister, Service],
-                             maybe_add_acl([]), "") of
+                             [],
+                             maybe_add_acl([]),
+                             "") of
     {ok, _} -> ok;
     Error   -> Error
   end.
@@ -245,14 +253,14 @@ unregister() ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% If configured, add the ACL token to the query arguments.
+%% If configured, add the ACL token to the headers.
 %% @end
 %%--------------------------------------------------------------------
 -spec maybe_add_acl(QArgs :: list()) -> list().
 maybe_add_acl(QArgs) ->
   case autocluster_config:get(consul_acl_token) of
     "undefined" -> QArgs;
-    ACL         -> lists:append(QArgs, [{token, ACL}])
+    ACL         -> lists:append(QArgs, [{"X-Consul-Token", ACL}])
   end.
 
 
@@ -326,7 +334,7 @@ extract_nodes([H|T], Nodes) ->
 %%--------------------------------------------------------------------
 -spec node_list_qargs() -> list().
 node_list_qargs() ->
-  maybe_add_acl(node_list_qargs(autocluster_config:get(cluster_name))).
+  node_list_qargs(autocluster_config:get(cluster_name)).
 
 
 %%--------------------------------------------------------------------
@@ -719,7 +727,7 @@ get_session_id(Maps) ->
 %%--------------------------------------------------------------------
 -spec create_session(string(), pos_integer()) -> {ok, string()} | {error, Reason::string()}.
 create_session(Name, TTL) ->
-    case consul_session_create(maybe_add_acl([]),
+    case consul_session_create([], maybe_add_acl([]),
                                [{'Name', list_to_atom(Name)},
                                 {'TTL', list_to_atom(service_ttl(TTL))}]) of
         {ok, Response} ->
@@ -736,7 +744,7 @@ create_session(Name, TTL) ->
 %%--------------------------------------------------------------------
 -spec session_ttl_update_callback(string()) -> string().
 session_ttl_update_callback(SessionId) ->
-    _ = consul_session_renew(SessionId, maybe_add_acl([])),
+    _ = consul_session_renew(SessionId, [], maybe_add_acl([])),
     SessionId.
 
 
@@ -815,7 +823,7 @@ startup_lock_path() ->
 %%--------------------------------------------------------------------
 -spec acquire_lock(string()) -> {ok, term()} | {error, string()}.
 acquire_lock(SessionId) ->
-    consul_kv_write(startup_lock_path(), maybe_add_acl([{acquire, SessionId}]), []).
+    consul_kv_write(startup_lock_path(), [{acquire, SessionId}], maybe_add_acl([]), []).
 
 
 %%--------------------------------------------------------------------
@@ -826,7 +834,7 @@ acquire_lock(SessionId) ->
 %%--------------------------------------------------------------------
 -spec release_lock(string()) -> {ok, term()} | {error, string()}.
 release_lock(SessionId) ->
-    consul_kv_write(startup_lock_path(), maybe_add_acl([{release, SessionId}]), []).
+    consul_kv_write(startup_lock_path(), [{release, SessionId}], maybe_add_acl([]), []).
 
 
 %%--------------------------------------------------------------------
@@ -839,7 +847,7 @@ release_lock(SessionId) ->
 %%--------------------------------------------------------------------
 -spec get_lock_status() -> {ok, term()} | {error, string()}.
 get_lock_status() ->
-    case consul_kv_read(startup_lock_path(), maybe_add_acl([])) of
+    case consul_kv_read(startup_lock_path(), [], maybe_add_acl([])) of
         {ok, [KeyData | _]} ->
             SessionHeld = proplists:get_value(<<"Session">>, KeyData) =/= undefined,
             ModifyIndex = proplists:get_value(<<"ModifyIndex">>, KeyData),
@@ -859,8 +867,8 @@ get_lock_status() ->
 wait_for_lock_release(false, _, _) -> ok;
 wait_for_lock_release(_, Index, Wait) ->
     case consul_kv_read(startup_lock_path(),
-                        maybe_add_acl([{index, Index},
-                                       {wait, service_ttl(Wait)}])) of
+                        [{index, Index}, {wait, service_ttl(Wait)}],
+                        maybe_add_acl([])) of
         {ok, _}          -> ok;
         {error, _} = Err -> Err
     end.
@@ -875,14 +883,18 @@ wait_for_lock_release(_, Index, Wait) ->
 %% Read KV store key value
 %% @end
 %%--------------------------------------------------------------------
--spec consul_kv_read(Path, Query) -> {ok, term()} | {error, string()} when
+-spec consul_kv_read(Path, Query, Headers) -> {ok, term()} | {error, string()} when
       Path :: [autocluster_httpc:path_component()],
-      Query :: [autocluster_httpc:query_component()].
-consul_kv_read(Path, Query) ->
+      Query :: [autocluster_httpc:query_component()],
+      Headers :: [{string(), string()}].
+consul_kv_read(Path, Query, Headers) ->
     autocluster_httpc:get(autocluster_config:get(consul_scheme),
                           autocluster_config:get(consul_host),
                           autocluster_config:get(consul_port),
-                          [v1, kv] ++ Path, Query).
+                          [v1, kv] ++ Path,
+                          Query,
+                          Headers,
+                          []).
 
 
 %%--------------------------------------------------------------------
@@ -891,17 +903,21 @@ consul_kv_read(Path, Query) ->
 %% Write KV store key value
 %% @end
 %%--------------------------------------------------------------------
--spec consul_kv_write(Path, Query, Body) -> {ok, term()} | {error, string()} when
+-spec consul_kv_write(Path, Query, Headers, Body) -> {ok, term()} | {error, string()} when
       Path :: [autocluster_httpc:path_component()],
       Query :: [autocluster_httpc:query_component()],
+      Headers :: [{string(), string()}],
       Body :: term().
-consul_kv_write(Path, Query, Body) ->
+consul_kv_write(Path, Query, Headers, Body) ->
     case serialize_json_body(Body) of
         {ok, Serialized} ->
             autocluster_httpc:put(autocluster_config:get(consul_scheme),
                                   autocluster_config:get(consul_host),
                                   autocluster_config:get(consul_port),
-                                  [v1, kv] ++ Path, Query, Serialized);
+                                  [v1, kv] ++ Path,
+                                  Query,
+                                  Headers,
+                                  Serialized);
         {error, _} = Err ->
             Err
     end.
@@ -933,16 +949,20 @@ consul_kv_write(Path, Query, Body) ->
 %% Create session
 %% @end
 %%--------------------------------------------------------------------
--spec consul_session_create(Query, Body) -> {ok, term()} | {error, Reason::string()} when
+-spec consul_session_create(Query, Headers, Body) -> {ok, term()} | {error, Reason::string()} when
       Query :: [autocluster_httpc:query_component()],
+      Headers :: [{string(), string()}],
       Body :: term().
-consul_session_create(Query, Body) ->
+consul_session_create(Query, Headers, Body) ->
       case serialize_json_body(Body) of
           {ok, Serialized} ->
               autocluster_httpc:put(autocluster_config:get(consul_scheme),
                                     autocluster_config:get(consul_host),
                                     autocluster_config:get(consul_port),
-                                    [v1, session, create], Query, Serialized);
+                                    [v1, session, create],
+                                    Query,
+                                    Headers,
+                                    Serialized);
           {error, _} = Err ->
               Err
       end.
@@ -954,9 +974,12 @@ consul_session_create(Query, Body) ->
 %% Renew session TTL
 %% @end
 %%--------------------------------------------------------------------
--spec consul_session_renew(string(), [autocluster_httpc:query_component()]) -> {ok, term()} | {error, string()}.
-consul_session_renew(SessionId, Query) ->
+-spec consul_session_renew(string(), [autocluster_httpc:query_component()], [{string(), string()}]) -> {ok, term()} | {error, string()}.
+consul_session_renew(SessionId, Query, Headers) ->
   autocluster_httpc:put(autocluster_config:get(consul_scheme),
                         autocluster_config:get(consul_host),
                         autocluster_config:get(consul_port),
-                        [v1, session, renew, list_to_atom(SessionId)], Query, []).
+                        [v1, session, renew, list_to_atom(SessionId)],
+                        Query,
+                        Headers,
+                        []).

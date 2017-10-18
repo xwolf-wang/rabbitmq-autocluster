@@ -154,12 +154,14 @@ nodelist_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, health, service, "rabbitmq"], Path),
               ?assertEqual([passing], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {error, "testing"}
             end),
           ?assertEqual({error, "testing"}, autocluster_consul:nodelist()),
@@ -168,12 +170,14 @@ nodelist_test_() ->
       {"without token",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("https", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, health, service, "rabbit"], Path),
               ?assertEqual([passing], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {error, "testing"}
             end),
           os:putenv("CONSUL_SCHEME", "https"),
@@ -186,12 +190,14 @@ nodelist_test_() ->
       {"with token",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, health, service, "rabbitmq"], Path),
-              ?assertEqual([passing, {token, "token-value"}], Args),
+              ?assertEqual([passing], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], HttpOpts),
               {error, "testing"}
             end),
           os:putenv("CONSUL_HOST", "consul.service.consul"),
@@ -203,12 +209,14 @@ nodelist_test_() ->
       {"with cluster name",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, health, service, "rabbitmq"], Path),
               ?assertEqual([passing, {tag,"bob"}], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {error, "testing"}
             end),
           os:putenv("CLUSTER_NAME", "bob"),
@@ -218,12 +226,14 @@ nodelist_test_() ->
       {"with cluster name and token",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, health, service, "rabbitmq"], Path),
-              ?assertEqual([passing, {tag,"bob"}, {token, "token-value"}], Args),
+              ?assertEqual([passing, {tag,"bob"}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], HttpOpts),
               {error, "testing"}
             end),
           os:putenv("CLUSTER_NAME", "bob"),
@@ -234,7 +244,7 @@ nodelist_test_() ->
       {"return result",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(_, _, _, _, _) ->
+            fun(_, _, _, _, _, _, _) ->
               Body = "[{\"Node\": {\"Node\": \"rabbit2.internal.domain\", \"Address\": \"10.20.16.160\"}, \"Checks\": [{\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"\", \"Port\": 5672, \"ID\": \"rabbitmq\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}, {\"Node\": {\"Node\": \"rabbit1.internal.domain\", \"Address\": \"10.20.16.159\"}, \"Checks\": [{\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"\", \"Port\": 5672, \"ID\": \"rabbitmq\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}]",
               json_decode(Body)
             end),
@@ -245,7 +255,7 @@ nodelist_test_() ->
       {"return result with consul long name",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(_, _, _, _, _) ->
+            fun(_, _, _, _, _, _, _) ->
               Body = "[{\"Node\": {\"Node\": \"rabbit2\", \"Address\": \"10.20.16.160\"}, \"Checks\": [{\"Node\": \"rabbit2\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit2\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"\", \"Port\": 5672, \"ID\": \"rabbitmq\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}, {\"Node\": {\"Node\": \"rabbit1\", \"Address\": \"10.20.16.159\"}, \"Checks\": [{\"Node\": \"rabbit1\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit1\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"\", \"Port\": 5672, \"ID\": \"rabbitmq\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}]",
               json_decode(Body)
             end),
@@ -257,7 +267,7 @@ nodelist_test_() ->
       {"return result with long name and custom domain",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(_, _, _, _, _) ->
+            fun(_, _, _, _, _, _, _) ->
               Body = "[{\"Node\": {\"Node\": \"rabbit2\", \"Address\": \"10.20.16.160\"}, \"Checks\": [{\"Node\": \"rabbit2\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit2\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"\", \"Port\": 5672, \"ID\": \"rabbitmq\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}, {\"Node\": {\"Node\": \"rabbit1\", \"Address\": \"10.20.16.159\"}, \"Checks\": [{\"Node\": \"rabbit1\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit1\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"\", \"Port\": 5672, \"ID\": \"rabbitmq\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}]",
               json_decode(Body)
             end),
@@ -270,7 +280,7 @@ nodelist_test_() ->
       {"return result with srv address",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(_, _, _, _, _) ->
+            fun(_, _, _, _, _, _, _) ->
               Body = "[{\"Node\": {\"Node\": \"rabbit2.internal.domain\", \"Address\": \"10.20.16.160\"}, \"Checks\": [{\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq:172.172.16.4.50\", \"Output\": \"\"}, {\"Node\": \"rabbit2.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"172.16.4.51\", \"Port\": 5672, \"ID\": \"rabbitmq:172.16.4.51\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}, {\"Node\": {\"Node\": \"rabbit1.internal.domain\", \"Address\": \"10.20.16.159\"}, \"Checks\": [{\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"service:rabbitmq\", \"Name\": \"Service \'rabbitmq\' check\", \"ServiceName\": \"rabbitmq\", \"Notes\": \"Connect to the port internally every 30 seconds\", \"Status\": \"passing\", \"ServiceID\": \"rabbitmq\", \"Output\": \"\"}, {\"Node\": \"rabbit1.internal.domain\", \"CheckID\": \"serfHealth\", \"Name\": \"Serf Health Status\", \"ServiceName\": \"\", \"Notes\": \"\", \"Status\": \"passing\", \"ServiceID\": \"\", \"Output\": \"Agent alive and reachable\"}], \"Service\": {\"Address\": \"172.172.16.51\", \"Port\": 5672, \"ID\": \"rabbitmq:172.172.16.51\", \"Service\": \"rabbitmq\", \"Tags\": [\"amqp\"]}}]",
               json_decode(Body)
             end),
@@ -281,9 +291,9 @@ nodelist_test_() ->
       {"return result with warnings allowed",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(_, _, _, _, []) ->
+            fun(_, _, _, _, [], _, _) ->
                     json_decode(with_warnings());
-               (_, _, _, _, [passing]) ->
+               (_, _, _, _, [passing], _, _) ->
                     json_decode(without_warnings())
             end),
           os:putenv("CONSUL_INCLUDE_NODES_WITH_WARNINGS", "true"),
@@ -294,9 +304,9 @@ nodelist_test_() ->
       {"return result with no warnings allowed",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(_, _, _, _, []) ->
+            fun(_, _, _, _, [], _, _) ->
                     json_decode(with_warnings());
-               (_, _, _, _, [passing]) ->
+               (_, _, _, _, [passing], _, _) ->
                     json_decode(without_warnings())
             end),
           Expectation = {ok,['rabbit@172.16.4.51', 'rabbit@172.172.16.51']},
@@ -324,12 +334,13 @@ register_test_() ->
         fun() ->
           meck:expect(autocluster_log, debug, fun(_Message) -> ok end),
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -349,12 +360,13 @@ register_test_() ->
       {"with cluster name",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"},\"Tags\":[\"test-rabbit\"]}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -365,12 +377,13 @@ register_test_() ->
         end},
       {"without token",  fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("https", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, agent, service, register], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               Expect = <<"{\"ID\":\"rabbit:10.0.0.1\",\"Name\":\"rabbit\",\"Address\":\"10.0.0.1\",\"Port\":5671,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -387,12 +400,13 @@ register_test_() ->
       {"with token",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
-              ?assertEqual([{token, "token-value"}], Args),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
               Expect = <<"{\"ID\":\"rabbitmq\",\"Name\":\"rabbitmq\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -408,12 +422,13 @@ register_test_() ->
           meck:expect(autocluster_util, node_hostname, fun(true) -> "bob.consul.node";
                                                           (false) -> "bob" end),
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
-              ?assertEqual([{token, "token-value"}], Args),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
               Expect = <<"{\"ID\":\"rabbitmq:bob\",\"Name\":\"rabbitmq\",\"Address\":\"bob\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -431,12 +446,13 @@ register_test_() ->
           meck:expect(autocluster_util, node_hostname, fun(true) -> "bob.consul.node";
                                                           (false) -> "bob" end),
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
-              ?assertEqual([{token, "token-value"}], Args),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
               Expect = <<"{\"ID\":\"rabbitmq:bob.consul.node\",\"Name\":\"rabbitmq\",\"Address\":\"bob.consul.node\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -458,12 +474,13 @@ register_test_() ->
               {ok, "172.16.4.50"}
             end),
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, service, register], Path),
-              ?assertEqual([{token, "token-value"}], Args),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
               Expect = <<"{\"ID\":\"rabbitmq:172.16.4.50\",\"Name\":\"rabbitmq\",\"Address\":\"172.16.4.50\",\"Port\":5672,\"Check\":{\"Notes\":\"rabbitmq-autocluster node check\",\"TTL\":\"30s\",\"Status\":\"passing\"}}">>,
               ?assertEqual(Expect, Body),
               {ok, []}
@@ -481,7 +498,7 @@ register_test_() ->
         meck:expect(timer, apply_interval, fun(_, _, _, _) ->
           {error, "should not be called"}
          end),
-        meck:expect(autocluster_httpc, put, fun (_, _, _, _, _, _) -> {ok, []} end),
+        meck:expect(autocluster_httpc, put, fun (_, _, _, _, _, _, _) -> {ok, []} end),
         os:putenv("CONSUL_SVC_TTL", ""),
         ?assertEqual(ok, autocluster_consul:register()),
         ?assert(meck:validate(timer))
@@ -499,7 +516,7 @@ register_failure_test_() ->
         fun() ->
           meck:new(autocluster_httpc),
           meck:expect(autocluster_httpc, put,
-            fun(_Scheme, _Host, _Port, _Path, _Args, _body) ->
+            fun(_Scheme, _Host, _Port, _Path, _Args, _Headers, _body) ->
               {error, "testing"}
             end),
           ?assertEqual({error, "testing"}, autocluster_consul:register()),
@@ -537,12 +554,13 @@ send_health_check_pass_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, agent, check, pass, "service:rabbitmq"], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               ?assertEqual("", Body),
               {ok, []}
             end),
@@ -552,12 +570,13 @@ send_health_check_pass_test_() ->
       {"without token",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("https", Scheme),
               ?assertEqual("consul.service.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, agent, check, pass, "service:rabbit"], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               ?assertEqual("", Body),
               {ok, []}
             end),
@@ -570,12 +589,13 @@ send_health_check_pass_test_() ->
         end},
       {"with token", fun() ->
         meck:expect(autocluster_httpc, put,
-          fun(Scheme, Host, Port, Path, Args, Body) ->
+          fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, agent, check, pass, "service:rabbitmq"], Path),
-            ?assertEqual([{token, "token-value"}], Args),
+            ?assertEqual([], Args),
+            ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
             ?assertEqual("", Body),
             {ok, []}
           end),
@@ -590,7 +610,7 @@ send_health_check_pass_test_() ->
           ok
           end),
         meck:expect(autocluster_httpc, put,
-          fun(_Scheme, _Host, _Port, _Path, _Args, _Body) ->
+          fun(_Scheme, _Host, _Port, _Path, _Args, _Headers, _Body) ->
             {error, "testing"}
           end),
         ?assertEqual(ok, autocluster_consul:send_health_check_pass()),
@@ -613,12 +633,13 @@ unregister_test_() ->
     [
       {"default values", fun() ->
         meck:expect(autocluster_httpc, put,
-          fun(Scheme, Host, Port, Path, Args, Body) ->
+          fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("localhost", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, agent, service, deregister, "rabbitmq"], Path),
             ?assertEqual([], Args),
+            ?assertEqual([], Headers),
             ?assertEqual("", Body),
             {ok, []}
           end),
@@ -627,12 +648,13 @@ unregister_test_() ->
                          end},
       {"without token", fun() ->
         meck:expect(autocluster_httpc, put,
-          fun(Scheme, Host, Port, Path, Args, Body) ->
+          fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
             ?assertEqual("https", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8501, Port),
             ?assertEqual([v1, agent, service, deregister,"rabbit:10.0.0.1"], Path),
             ?assertEqual([], Args),
+            ?assertEqual([], Headers),
             ?assertEqual("", Body),
             {ok, []}
           end),
@@ -647,12 +669,13 @@ unregister_test_() ->
        end},
       {"with token", fun() ->
         meck:expect(autocluster_httpc, put,
-          fun(Scheme, Host, Port, Path, Args, Body) ->
+          fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("consul.service.consul", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, agent, service, deregister,"rabbitmq"], Path),
-            ?assertEqual([{token, "token-value"}], Args),
+            ?assertEqual([], Args),
+            ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
             ?assertEqual("", Body),
             {ok, []}
           end),
@@ -664,7 +687,7 @@ unregister_test_() ->
        end},
       {"on error", fun() ->
         meck:expect(autocluster_httpc, put,
-          fun(_Scheme, _Host, _Port, _Path, _Args, _Body) ->
+          fun(_Scheme, _Host, _Port, _Path, _Args, _Headers, _Body) ->
             {error, "testing"}
           end),
         ?assertEqual({error, "testing"}, autocluster_consul:unregister()),
@@ -723,12 +746,13 @@ create_session_test_() ->
       {"without token",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, session, create], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               Expect = <<"{\"Name\":\"node-name\",\"TTL\":\"30s\"}">>,
               ?assertEqual(Expect, Body),
               {ok, #{<<"ID">> => <<"session-id">>}}
@@ -739,12 +763,13 @@ create_session_test_() ->
     {"with token",
       fun() ->
         meck:expect(autocluster_httpc, put,
-          fun(Scheme, Host, Port, Path, Args, Body) ->
+          fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
             ?assertEqual("http", Scheme),
             ?assertEqual("localhost", Host),
             ?assertEqual(8500, Port),
             ?assertEqual([v1, session, create], Path),
-            ?assertEqual([{token, "token-value"}], Args),
+            ?assertEqual([], Args),
+            ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
             Expect = <<"{\"Name\":\"node-name\",\"TTL\":\"30s\"}">>,
             ?assertEqual(Expect, Body),
             {ok, #{<<"ID">> => <<"session-id">>}}
@@ -770,12 +795,14 @@ get_lock_status_test_() ->
       {"without session",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {ok,[[{<<"LockIndex">>,3},
                             {<<"Key">>,<<"rabbitmq/default/startup_lock">>},
                             {<<"Flags">>,0},
@@ -790,12 +817,14 @@ get_lock_status_test_() ->
       {"with session",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {ok,[[{<<"LockIndex">>,3},
                             {<<"Key">>,<<"rabbitmq/default/startup_lock">>},
                             {<<"Flags">>,0},
@@ -809,12 +838,14 @@ get_lock_status_test_() ->
         {"with token",
           fun() ->
             meck:expect(autocluster_httpc, get,
-              fun(Scheme, Host, Port, Path, Args) ->
+              fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
                 ?assertEqual("http", Scheme),
                 ?assertEqual("localhost", Host),
                 ?assertEqual(8500, Port),
                 ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
-                ?assertEqual([{token, "token-value"}], Args),
+                ?assertEqual([], Args),
+                ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+                ?assertEqual([], HttpOpts),
                 {ok,[[{<<"LockIndex">>,3},
                               {<<"Key">>,<<"rabbitmq/default/startup_lock">>},
                               {<<"Flags">>,0},
@@ -842,12 +873,14 @@ wait_for_lock_release_with_session_test_() ->
       {"without token",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
               ?assertEqual([{index, 42}, {wait, "300s"}], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {ok, []}
             end),
           ?assertEqual(ok, autocluster_consul:wait_for_lock_release(true, 42, 300)),
@@ -856,12 +889,14 @@ wait_for_lock_release_with_session_test_() ->
       {"with token",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
-              ?assertEqual([{index, 42}, {wait, "300s"}, {token, "token-value"}], Args),
+              ?assertEqual([{index, 42}, {wait, "300s"}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], HttpOpts),
               {ok, []}
             end),
           os:putenv("CONSUL_ACL_TOKEN", "token-value"),
@@ -887,12 +922,13 @@ acquire_lock_test_() ->
       {"successfully acquired",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
               ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, true}
             end),
@@ -902,12 +938,13 @@ acquire_lock_test_() ->
         {"not acquired",
           fun() ->
             meck:expect(autocluster_httpc, put,
-              fun(Scheme, Host, Port, Path, Args, Body) ->
+              fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
                 ?assertEqual("http", Scheme),
                 ?assertEqual("localhost", Host),
                 ?assertEqual(8500, Port),
                 ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
                 ?assertEqual([{acquire, session_id}], Args),
+                ?assertEqual([], Headers),
                 ?assertEqual([], Body),
                 {ok, false}
               end),
@@ -917,12 +954,13 @@ acquire_lock_test_() ->
       {"with token",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
-              ?assertEqual([{acquire, session_id}, {token, "token-value"}], Args),
+              ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
               ?assertEqual([], Body),
               {ok, true}
             end),
@@ -946,12 +984,13 @@ release_lock_test_() ->
       {"successfully released",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
               ?assertEqual([{release, session_id}], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, true}
             end),
@@ -961,12 +1000,13 @@ release_lock_test_() ->
         {"not released",
           fun() ->
             meck:expect(autocluster_httpc, put,
-              fun(Scheme, Host, Port, Path, Args, Body) ->
+              fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
                 ?assertEqual("http", Scheme),
                 ?assertEqual("localhost", Host),
                 ?assertEqual(8500, Port),
                 ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
                 ?assertEqual([{release, session_id}], Args),
+                ?assertEqual([], Headers),
                 ?assertEqual([], Body),
                 {ok, false}
               end),
@@ -976,12 +1016,13 @@ release_lock_test_() ->
       {"with token",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "rabbitmq", "default", "startup_lock"], Path),
-              ?assertEqual([{release, session_id}, {token, "token-value"}], Args),
+              ?assertEqual([{release, session_id}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
               ?assertEqual([], Body),
               {ok, true}
             end),
@@ -1005,31 +1046,71 @@ consul_kv_read_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "path", "to", "key"], Path),
               ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {ok, []}
             end),
-          ?assertEqual({ok, []}, autocluster_consul:consul_kv_read(["path", "to", "key"], [{acquire, session_id}])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_read(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]))),
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"custom values",
         fun() ->
           meck:expect(autocluster_httpc, get,
-            fun(Scheme, Host, Port, Path, Args) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.node.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, kv, "path", "to", "key"], Path),
               ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([], Headers),
+              ?assertEqual([], HttpOpts),
               {ok, []}
             end),
           os:putenv("CONSUL_HOST", "consul.node.consul"),
           os:putenv("CONSUL_PORT", "8501"),
-          ?assertEqual({ok, []}, autocluster_consul:consul_kv_read(["path", "to", "key"], [{acquire, session_id}])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_read(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]))),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"default values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, get,
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("localhost", Host),
+              ?assertEqual(8500, Port),
+              ?assertEqual([v1, kv, "path", "to", "key"], Path),
+              ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], HttpOpts),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_read(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]))),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"custom values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, get,
+            fun(Scheme, Host, Port, Path, Args, Headers, HttpOpts) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("consul.node.consul", Host),
+              ?assertEqual(8501, Port),
+              ?assertEqual([v1, kv, "path", "to", "key"], Path),
+              ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], HttpOpts),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_HOST", "consul.node.consul"),
+          os:putenv("CONSUL_PORT", "8501"),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_read(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]))),
           ?assert(meck:validate(autocluster_httpc))
         end}
     ]
@@ -1048,33 +1129,71 @@ consul_kv_write_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, kv, "path", "to", "key"], Path),
               ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, []}
             end),
-          ?assertEqual({ok, []}, autocluster_consul:consul_kv_write(["path", "to", "key"], [{acquire, session_id}], [])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_write(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]), [])),
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"custom values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.node.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, kv, "path", "to", "key"], Path),
               ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, []}
             end),
           os:putenv("CONSUL_HOST", "consul.node.consul"),
           os:putenv("CONSUL_PORT", "8501"),
-          ?assertEqual({ok, []}, autocluster_consul:consul_kv_write(["path", "to", "key"], [{acquire, session_id}], [])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_write(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]), [])),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"default values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("localhost", Host),
+              ?assertEqual(8500, Port),
+              ?assertEqual([v1, kv, "path", "to", "key"], Path),
+              ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], Body),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_write(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]), [])),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"custom values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("consul.node.consul", Host),
+              ?assertEqual(8501, Port),
+              ?assertEqual([v1, kv, "path", "to", "key"], Path),
+              ?assertEqual([{acquire, session_id}], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], Body),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_HOST", "consul.node.consul"),
+          os:putenv("CONSUL_PORT", "8501"),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_kv_write(["path", "to", "key"], [{acquire, session_id}], autocluster_consul:maybe_add_acl([]), [])),
           ?assert(meck:validate(autocluster_httpc))
         end}
     ]
@@ -1093,33 +1212,71 @@ consul_session_create_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, session, create], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, []}
             end),
-          ?assertEqual({ok, []}, autocluster_consul:consul_session_create([], [])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_create([], autocluster_consul:maybe_add_acl([]), [])),
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"custom values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.node.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, session, create], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, []}
             end),
           os:putenv("CONSUL_HOST", "consul.node.consul"),
           os:putenv("CONSUL_PORT", "8501"),
-          ?assertEqual({ok, []}, autocluster_consul:consul_session_create([], [])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_create([], autocluster_consul:maybe_add_acl([]), [])),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"default values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("localhost", Host),
+              ?assertEqual(8500, Port),
+              ?assertEqual([v1, session, create], Path),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], Body),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_create([], autocluster_consul:maybe_add_acl([]), [])),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"custom values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("consul.node.consul", Host),
+              ?assertEqual(8501, Port),
+              ?assertEqual([v1, session, create], Path),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], Body),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_HOST", "consul.node.consul"),
+          os:putenv("CONSUL_PORT", "8501"),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_create([], autocluster_consul:maybe_add_acl([]), [])),
           ?assert(meck:validate(autocluster_httpc))
         end}
     ]
@@ -1138,33 +1295,71 @@ consul_session_renew_test_() ->
       {"default values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("localhost", Host),
               ?assertEqual(8500, Port),
               ?assertEqual([v1, session, renew, session_id], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, []}
             end),
-          ?assertEqual({ok, []}, autocluster_consul:consul_session_renew("session_id", [])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_renew("session_id", [], autocluster_consul:maybe_add_acl([]))),
           ?assert(meck:validate(autocluster_httpc))
         end},
       {"custom values",
         fun() ->
           meck:expect(autocluster_httpc, put,
-            fun(Scheme, Host, Port, Path, Args, Body) ->
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
               ?assertEqual("http", Scheme),
               ?assertEqual("consul.node.consul", Host),
               ?assertEqual(8501, Port),
               ?assertEqual([v1, session, renew, session_id], Path),
               ?assertEqual([], Args),
+              ?assertEqual([], Headers),
               ?assertEqual([], Body),
               {ok, []}
             end),
           os:putenv("CONSUL_HOST", "consul.node.consul"),
           os:putenv("CONSUL_PORT", "8501"),
-          ?assertEqual({ok, []}, autocluster_consul:consul_session_renew("session_id", [])),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_renew("session_id", [], autocluster_consul:maybe_add_acl([]))),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"default values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("localhost", Host),
+              ?assertEqual(8500, Port),
+              ?assertEqual([v1, session, renew, session_id], Path),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], Body),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_renew("session_id", [], autocluster_consul:maybe_add_acl([]))),
+          ?assert(meck:validate(autocluster_httpc))
+        end},
+      {"custom values with token",
+        fun() ->
+          meck:expect(autocluster_httpc, put,
+            fun(Scheme, Host, Port, Path, Args, Headers, Body) ->
+              ?assertEqual("http", Scheme),
+              ?assertEqual("consul.node.consul", Host),
+              ?assertEqual(8501, Port),
+              ?assertEqual([v1, session, renew, session_id], Path),
+              ?assertEqual([], Args),
+              ?assertEqual([{"X-Consul-Token", "token-value"}], Headers),
+              ?assertEqual([], Body),
+              {ok, []}
+            end),
+          os:putenv("CONSUL_HOST", "consul.node.consul"),
+          os:putenv("CONSUL_PORT", "8501"),
+          os:putenv("CONSUL_ACL_TOKEN", "token-value"),
+          ?assertEqual({ok, []}, autocluster_consul:consul_session_renew("session_id", [], autocluster_consul:maybe_add_acl([]))),
           ?assert(meck:validate(autocluster_httpc))
         end}
     ]
