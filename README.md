@@ -79,7 +79,7 @@ of backends (e.g. AWS and etcd) rather than a wholesale alternative cluster form
 Supported Erlang Versions
 -------------------------
 
-This plugin requires Erlang/OTP 17.5 or later.
+This plugin requires Erlang/OTP 18.3 or later.
 Also see the [RabbitMQ Erlang version requirements](http://next.rabbitmq.com/which-erlang.html) guide.
 
 
