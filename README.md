@@ -107,8 +107,8 @@ This plugin is installed the same way as [other RabbitMQ plugins](http://www.rab
 
 Alternatively, there is a pre-built Docker Image available at on DockerHub as [pivotalrabbitmq/rabbitmq-autocluster](https://hub.docker.com/r/pivotalrabbitmq/rabbitmq-autocluster/).
 
-**Note**
-As of version ``0.5`` the autocluster plugin does not have a default backend configured. See the [Project Wiki](https://github.com/rabbitmq/rabbitmq-autocluster/wiki) for configuration details.
+Note that plugin does not have a default backend configured. A little bit of configuration
+is therefore mandatory regardless of the backend used.
 
 
 Configuration
