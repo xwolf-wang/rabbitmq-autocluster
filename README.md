@@ -89,10 +89,10 @@ Binary Releases
 Binary releases of autocluster can be found on the
 [GitHub Releases](https://github.com/rabbitmq/rabbitmq-autocluster/releases) page.
 
-The most recent release is [0.8.0](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.8.0) that
-targets RabbitMQ `3.6.10` or later.
+The most recent release is [0.10.0](https://github.com/rabbitmq/rabbitmq-autocluster/releases/tag/0.10.0) that
+targets RabbitMQ `3.6.12` or later.
 
-Check for version compatibility in [plugin release notes](https://github.com/rabbitmq/rabbitmq-autocluster/releases).
+See [release notes](https://github.com/rabbitmq/rabbitmq-autocluster/releases) for details.
 
 
 Installation
