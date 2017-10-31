@@ -114,9 +114,10 @@ is therefore mandatory regardless of the backend used.
 Configuration
 -------------
 
-  * [General settings](#general-settings)
+  * [General Settings](#general-settings)
      * [Available Settings](#available-settings)
-     * [Details](#details)
+     * [How to Configure Settings](#details)
+  * [AWS configuration](#aws-configuration)
      * [AWS API Configuration and Credentials](#aws-api-configuration-and-credentials)
      * [AWS Credentials and Configuration Settings](#aws-credentials-and-configuration-settings)
      * [IAM Policy](#iam-policy)
@@ -136,7 +137,7 @@ Configuration
 ### General settings
 
 Configuration for the plugin can be set in two places: operating system environment variables
-or the ``rabbitmq.config`` file under the ``autocluster`` stanza.
+or the ``rabbitmq.config`` file under the ``autocluster`` section.
 
 #### Available Settings
 
@@ -183,7 +184,9 @@ The following settings are generic and used by most (or all) service discovery b
 
   <dl/>
 
-#### Settings Details
+
+
+#### How to Configure Settings
 
 You are able to configure autocluster plugin via Environment Variables or in the [rabbitmq.config](https://www.rabbitmq.com/configure.html#configuration-file) file.
 
