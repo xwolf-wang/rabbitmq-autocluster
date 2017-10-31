@@ -140,7 +140,7 @@ or the ``rabbitmq.config`` file under the ``autocluster`` stanza.
 
 #### Available Settings
 
-The following settings are available for all service discovery backends:
+The following settings are generic and used by most (or all) service discovery backends:
 
 <dl>
   <dt>Backend Type</dt>
@@ -154,7 +154,15 @@ The following settings are available for all service discovery backends:
   <dt>Longname (FQDN) Support</dt>
   <dd>This is a RabbitMQ  environment variable setting that is used by the autocluster plugin as well. When set to <code>true</code> this will cause RabbitMQ <b>and the</b> autocluster plugin to use fully qualified names to identify nodes. For more information about the <code>RABBITMQ_USE_LONGNAME</code> environment variable, see the <a href="https://www.rabbitmq.com/configure.html#define-environment-variables">RabbitMQ documentation</a></dd>
   <dt>Node Name</dt>
-  <dd>Like Longname Support, Node Name is a RabbitMQ setting that is used by the autocluster plugin as well. When set to <code>true</code> this will cause RabbitMQ <b>and the</b> autocluster plugin. The <code>RABBITMQ_NODENAME</code> environment variable explicitly sets the node name that is used to identify the node with RabbitMQ. The autocluster plugin will use this value when constructing the local part/name/prefix for all nodes in this cluster. For example, if <code>RABBITMQ_NODENAME</code> is set to <code>bunny@rabbit1</code>, <code>bunny</code> will be prefixed to all nodes discovered by the various backends. For more information about the <code>RABBITMQ_NODENAME</code> environment variable, see the <a href="https://www.rabbitmq.com/configure.html#define-environment-variables">RabbitMQ documentation</a></dd>
+  <dd>
+    Like long node name support, node name is a RabbitMQ server setting that can be used together with this plugin.
+    When set to <code>true</code> this will cause RabbitMQ <b>and the</b> autocluster plugin.
+    The <code>RABBITMQ_NODENAME</code> environment variable explicitly sets the node name that is used to identify the node with RabbitMQ. The autocluster plugin will use this value when constructing the local part/name/prefix for all nodes in this cluster.
+    For example, if <code>RABBITMQ_NODENAME</code> is set to <code>bunny@rabbit1</code>, <code>bunny</code> will be prefixed to all nodes discovered by the various backends.
+    For more information about the <code>RABBITMQ_NODENAME</code> environment variable, see the <a href="https://www.rabbitmq.com/configure.html#define-environment-variables">RabbitMQ documentation</a>.
+    Note that some backends offer ways to dynamically compute node name (e.g. AWS, Consul), others assume that node names are preconfigured out-of-band and provided
+    by the discovery service (e.g. DNS). In those cases it may or not be possible (or recommended) to use <code>RABBITMQ_NODENAME</code>.
+  </dd>
   <dt>Node Type</dt>
   <dd>Define the type of node to join the cluster as. One of <code>disc</code> or <code>ram</code>. See the <a href="https://www.rabbitmq.com/clustering.html">RabbitMQ Clustering Guide</a> for more information.</dd>
   <dt>Cluster Cleanup</dt>
