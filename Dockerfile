@@ -1,9 +1,9 @@
 FROM alpine:3.6
 
 # Version of RabbitMQ to install
-ENV RABBITMQ_VERSION=3.6.12 \
+ENV RABBITMQ_VERSION=3.6.14 \
     ERL_EPMD_PORT=4369 \
-    AUTOCLUSTER_VERSION=0.8.0 \
+    AUTOCLUSTER_VERSION=0.10.0 \
     HOME=/var/lib/rabbitmq \
     PATH=/usr/lib/rabbitmq/sbin:$PATH \
     RABBITMQ_LOGS=- \
