@@ -1,8 +1,9 @@
 FROM alpine:3.6
 
 # Version of RabbitMQ to install
-ENV RABBITMQ_VERSION=3.7.0-beta.19 \
-    MILESTONE=v3.7.0-beta.19 \
+
+ENV RABBITMQ_VERSION=3.7.0-rc.1 \
+    MILESTONE=v3.7.0-rc.1 \
     ERL_EPMD_PORT=4369 \
     HOME=/var/lib/rabbitmq \
     PATH=/usr/lib/rabbitmq/sbin:$PATH \

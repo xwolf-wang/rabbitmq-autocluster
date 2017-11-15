@@ -19,7 +19,7 @@ services:
       - 5671
       - 15671
     tty: true
-    command:  sh -c "sleep 10; rabbitmq-server;" 
+    command:  sh -c "sleep 20; rabbitmq-server;" 
    lb:
     image: dockercloud/haproxy
     environment:
