@@ -33,7 +33,7 @@ nodelist() ->
 	    {ok, lists:map(fun node_name/1, Addresses)};
 	{error, Reason} ->
 	    autocluster_log:info(
-	      "Failed to get nodes from k8s - ~s", [Reason]),
+	      "Failed to get nodes from k8s - ~p", [Reason]),
 	    {error, Reason}
     end.
 
