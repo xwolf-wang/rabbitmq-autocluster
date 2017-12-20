@@ -61,13 +61,14 @@ Parts of it were adopted into RabbitMQ core (as of 3.7.0).
 Supported RabbitMQ Versions
 ---------------------------
 
-There are two branches in this repository that target different RabbitMQ
+There are three branches in this repository that target different RabbitMQ
 release series:
 
-* [stable](https://github.com/rabbitmq/rabbitmq-autocluster/tree/stable) targets RabbitMQ ``3.6.x`` (current ``stable`` RabbitMQ branch)
-* [master](https://github.com/rabbitmq/rabbitmq-autocluster/tree/master) is compatible with RabbitMQ ``3.7.x`` (current ``master`` RabbitMQ branch)
+* [v3.6.x](https://github.com/rabbitmq/rabbitmq-autocluster/tree/v3.6.x) targets RabbitMQ ``3.6.x`` (current ``stable`` RabbitMQ branch)
+* [v3.7.x](https://github.com/rabbitmq/rabbitmq-autocluster/tree/v3.7.x) is compatible with RabbitMQ ``3.7.x``
   but this plugin was superseded by a [new peer discovery subsystem](http://next.rabbitmq.com/cluster-formation.html) built on the
   same ideas.
+* `master` is a development branch that's not of much use at the moment.
 
 Please take this into account when building this plugin from source.
 
