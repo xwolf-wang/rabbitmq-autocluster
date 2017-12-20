@@ -12,7 +12,7 @@ Note for RabbitMQ 3.7.x Users
 -----------------------------
 
 Starting with RabbitMQ 3.7.0 (including previews and recent [snapshot builds](http://www.rabbitmq.com/snapshots.html)),
-this plugin was superseded by a [new peer discovery subsystem](http://next.rabbitmq.com/cluster-formation.html)
+this plugin was superseded by a [new peer discovery subsystem](http://rabbitmq.com/cluster-formation.html)
 built on the same ideas and supporting the same backends via separate plugins.
 
 Supported Discovery Backends
