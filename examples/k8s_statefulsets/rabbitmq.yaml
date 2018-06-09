@@ -47,8 +47,19 @@ spec:
           - name: AUTOCLUSTER_DELAY
             value: "10"
           - name: K8S_ADDRESS_TYPE
-            value: "ip" 
+            value: "ip"
           - name: AUTOCLUSTER_CLEANUP
             value: "true"
           - name: CLEANUP_WARN_ONLY
             value: "false"
+        volumeMounts:
+        - name: rabbitmq-volume
+          mountPath: /var/lib/rabbitmq
+  volumeClaimTemplates:
+  - metadata:
+      name: rabbitmq-volume
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
